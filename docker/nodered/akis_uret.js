@@ -308,6 +308,20 @@ node.status({ fill: 'green', shape: 'dot', text: Object.keys(geri).length ? 'say
 return null;
 `;
 
+KOD.cobanLora = `
+// ⑧ Acil olay internet beklemeden sahaya iner: LoRa ağ geçidi aşağı bağlantıyla çobanın cep ağ geçidine
+// gönderir (LoRaWAN Class C). Ağ sunucusu bu konuyu dinleyip aşağı bağlantı kuyruğuna alır.
+const kayitlar = msg.kayit ? [msg.kayit] : (msg.kayitlar || []);
+const al = kayitlar.filter(k => k.olcum === 'alarm');
+if (!al.length) return null;
+const say = (context.get('say') || 0) + al.length;
+context.set('say', say);
+const son = al[al.length - 1];
+node.status({ fill: 'red', shape: 'dot', text: 'çobana ' + say + ' alarm · son: ' + son.etiketler.tur + ' ' + son.alanlar.etiket });
+return [al.map(k => ({ topic: 'bis505-suru/' + k.etiketler.agil + '/asagi/coban',
+  payload: { tur: k.etiketler.tur, etiket: k.alanlar.etiket, sim_saat: k.alanlar.sim_saat, lat: k.alanlar.lat, lon: k.alanlar.lon } }))];
+`;
+
 let y = 0;
 function fn(id, ad, kod, x, yy, cikis, wires, z, baslat) {
   return { id, type: 'function', z: z || TAB, name: ad, func: kod.trim(), outputs: cikis, timeout: 0, noerr: 0, initialize: (baslat || '').trim(), finalize: '', libs: [], x, y: yy, wires };
@@ -319,14 +333,16 @@ const nodes = [
   { id: 'not1', type: 'comment', z: TAB, name: 'Okumalar: LoRaWAN ağ sunucusu → yerel broker (⑥) → kural motoru (⑦) → önem puanlama', info: '', x: 330, y: 40, wires: [] },
   { id: 'mq_lora', type: 'mqtt in', z: TAB, name: 'LoRa okumaları', topic: 'bis505-suru/+/lora/+', qos: '0', datatype: 'json', broker: 'broker', nl: false, rap: true, rh: 0, inputs: 0, x: 130, y: 100, wires: [['kural']] },
   fn('kural', 'Kural motoru (⑦)', KOD.kural, 340, 100, 2, [['onem'], ['onem']]),
-  fn('onem', 'Önem puanlama', KOD.onem, 560, 100, 2, [['baglanti'], ['tampon']]),
+  fn('onem', 'Önem puanlama', KOD.onem, 560, 100, 2, [['baglanti', 'coban_lora'], ['tampon']]),
+  fn('coban_lora', 'Çobana LoRa alarmı (⑧)', KOD.cobanLora, 830, 40, 1, [['mq_asagi']]),
+  { id: 'mq_asagi', type: 'mqtt out', z: TAB, name: 'Aşağı bağlantı (Class C)', topic: '', qos: '1', retain: 'false', respTopic: '', contentType: '', userProps: '', correl: '', expiry: '', broker: 'broker', x: 1070, y: 40, wires: [] },
   fn('tampon', 'Tampon ve özetleme (⑩)', KOD.tampon, 800, 160, 2, [['yazici'], ['baglanti']]),
 
   { id: 'not2', type: 'comment', z: TAB, name: 'Ağıl kapısı ve akşam sayımı (simülatör ve Wokwi okuyucusu)', info: '', x: 300, y: 240, wires: [] },
   { id: 'mq_kapi', type: 'mqtt in', z: TAB, name: 'Kapı geçişleri', topic: 'bis505-suru/+/kapi', qos: '0', datatype: 'json', broker: 'broker', nl: false, rap: true, rh: 0, inputs: 0, x: 130, y: 300, wires: [['kapi']] },
   fn('kapi', 'Kapı kaydı', KOD.kapi, 340, 300, 1, [['yazici']]),
   { id: 'mq_sayim', type: 'mqtt in', z: TAB, name: 'Akşam sayımı', topic: 'bis505-suru/+/sayim', qos: '0', datatype: 'json', broker: 'broker', nl: false, rap: true, rh: 0, inputs: 0, x: 130, y: 360, wires: [['sayim']] },
-  fn('sayim', 'Sayım ve eksik', KOD.sayim, 340, 360, 2, [['yazici'], ['baglanti']]),
+  fn('sayim', 'Sayım ve eksik', KOD.sayim, 340, 360, 2, [['yazici'], ['baglanti', 'coban_lora']]),
 
   { id: 'not3', type: 'comment', z: TAB, name: 'Bağlantı yöneticisi (⑪ ⑫): internet yokken bekletir, gelince önce acil sonra rutin', info: '', x: 360, y: 440, wires: [] },
   fn('baglanti', 'Bağlantı yöneticisi', KOD.baglanti, 820, 300, 2, [['yazici'], ['l_bulut_out']]),

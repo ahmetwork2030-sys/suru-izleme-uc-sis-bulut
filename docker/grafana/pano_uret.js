@@ -30,11 +30,13 @@ from(bucket: "sis")
 from(bucket: "sis")
   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r._measurement == "olcut" and r.agil == "agil-sim" and (r._field == "klasik_mesaj" or r._field == "uyuyan_mesaj"))
+  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)
   |> map(fn: (r) => ({ r with _field: if r._field == "klasik_mesaj" then "Klasik: her kayıt ayrı mesaj" else "Uyuyan Bulut: acil + günlük özet" }))`,
   veri: `
 from(bucket: "sis")
   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r._measurement == "olcut" and r.agil == "agil-sim" and (r._field == "klasik_kb" or r._field == "uyuyan_kb"))
+  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)
   |> map(fn: (r) => ({ r with _field: if r._field == "klasik_kb" then "Klasik" else "Uyuyan Bulut" }))`,
   harita: `
 from(bucket: "sis")

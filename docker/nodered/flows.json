@@ -90,12 +90,51 @@
     "y": 100,
     "wires": [
       [
-        "baglanti"
+        "baglanti",
+        "coban_lora"
       ],
       [
         "tampon"
       ]
     ]
+  },
+  {
+    "id": "coban_lora",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Çobana LoRa alarmı (⑧)",
+    "func": "// ⑧ Acil olay internet beklemeden sahaya iner: LoRa ağ geçidi aşağı bağlantıyla çobanın cep ağ geçidine\n// gönderir (LoRaWAN Class C). Ağ sunucusu bu konuyu dinleyip aşağı bağlantı kuyruğuna alır.\nconst kayitlar = msg.kayit ? [msg.kayit] : (msg.kayitlar || []);\nconst al = kayitlar.filter(k => k.olcum === 'alarm');\nif (!al.length) return null;\nconst say = (context.get('say') || 0) + al.length;\ncontext.set('say', say);\nconst son = al[al.length - 1];\nnode.status({ fill: 'red', shape: 'dot', text: 'çobana ' + say + ' alarm · son: ' + son.etiketler.tur + ' ' + son.alanlar.etiket });\nreturn [al.map(k => ({ topic: 'bis505-suru/' + k.etiketler.agil + '/asagi/coban',\n  payload: { tur: k.etiketler.tur, etiket: k.alanlar.etiket, sim_saat: k.alanlar.sim_saat, lat: k.alanlar.lat, lon: k.alanlar.lon } }))];",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 830,
+    "y": 40,
+    "wires": [
+      [
+        "mq_asagi"
+      ]
+    ]
+  },
+  {
+    "id": "mq_asagi",
+    "type": "mqtt out",
+    "z": "sis_sekme",
+    "name": "Aşağı bağlantı (Class C)",
+    "topic": "",
+    "qos": "1",
+    "retain": "false",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "broker",
+    "x": 1070,
+    "y": 40,
+    "wires": []
   },
   {
     "id": "tampon",
@@ -211,7 +250,8 @@
         "yazici"
       ],
       [
-        "baglanti"
+        "baglanti",
+        "coban_lora"
       ]
     ]
   },
