@@ -15,6 +15,8 @@ Hazırlayan: Ahmet ATAGÜL (251129017), Biruni Üniversitesi Bilgisayar Mühendi
 Docker servisleri yalnızca bu bilgisayardan (127.0.0.1) erişilebilir; aynı ağdaki başka cihazlara açılmaz. Durdurmak için `docker/DURDUR.bat`.
 Ayrıntılar: `docker/README.md` ve `wokwi/README.md`.
 
+Docker gösteriminden alınan ölçümler, ekran görüntüleri ve CSV dosyaları: `kayitlar/2026-11-22/OKUBENI.md` (yaklaşık 222 simülasyon günü; klasik yönteme göre ≈1.140 kat az mesaj, ≈430 kat az veri).
+
 Gösterimdeki mal sahibi adları ve kulak küpesi numaraları uydurmadır; gerçek kişi ya da hayvana ait değildir.
 
 ## Simülatör
