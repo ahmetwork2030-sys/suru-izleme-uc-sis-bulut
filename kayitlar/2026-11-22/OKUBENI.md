@@ -32,6 +32,9 @@ Kişi adları ve küpe numaraları uydurmadır.
 | `05_nodered_bulut.png` | Node-RED bulut sekmesi: bildirim servisi (⑭) ve hayvan kaydı |
 | `06_karsilastirma_grafigi.png` | Dışa aktarılan veriden çizilen karşılaştırma grafiği |
 | `07_nodered_internet_kesintisi.jpg` | Kesinti sırasında Node-RED: "İnternet yok · bekleyen 4 mesaj" |
+| `08_wokwi_etiket.png` | Wokwi'de LED kimlik etiketi devresi (ATtiny85) |
+| `09_wokwi_okuyucu.png` | Wokwi'de ağıl kapısı okuyucu (ESP32) çalışırken: LCD "İçeride 497/500" |
+| `10_simulator_sahneler.png` | Tarayıcı simülatörünün dört sahnesi |
 | `veriler/karsilastirma_zaman_serisi.csv` | 20 dakikada bir toplam mesaj ve veri, iki yöntem ve oranlar |
 | `veriler/alarmlar_ture_gore.csv` | Buluta ulaşan acil olaylar |
 | `veriler/bildirimler_aliciya_gore.csv` | Bildirimler alıcı ve kanala göre |
