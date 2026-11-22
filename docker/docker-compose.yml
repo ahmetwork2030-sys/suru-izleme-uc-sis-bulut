@@ -1,0 +1,86 @@
+# Sürü izleme platformu · kavram kanıtı (BIS505 Dönem Projesi · Ahmet ATAGÜL)
+#
+# Sabit sis düğümünün ve bulutun açık kaynak karşılıkları tek bilgisayarda çalışır:
+#   simulator  : sürü, tasmalar ve etiketler (LoRaWAN ağ sunucusunun çıktısını taklit eder)
+#   mosquitto  : yerel MQTT broker (Wokwi'deki kapı okuyucusunun iletilerini de köprüyle alır)
+#   nodered    : kural motoru, önem puanlama, tampon, özetleme, bağlantı yöneticisi
+#   influxdb   : "sis" (yerel ham veri) ve "bulut" (acil olay + özet) kovaları
+#   grafana    : panel
+#
+# Çalıştırma:  docker compose up -d     Panel: http://localhost:3000     Node-RED: http://localhost:1880
+# Güvenlik:    portlar yalnızca bu bilgisayara (127.0.0.1) açılır; aynı ağdaki başka cihazlar erişemez.
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  influxdb:
+    image: influxdb:2.7.11
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_KULLANICI}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_SIFRE}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: sis
+      DOCKER_INFLUXDB_INIT_RETENTION: 7d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN}
+    volumes:
+      - influx-veri:/var/lib/influxdb2
+      - ./influxdb/kovalar.sh:/docker-entrypoint-initdb.d/kovalar.sh:ro
+
+  nodered:
+    image: nodered/node-red:4.0.9
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1880:1880"
+    environment:
+      TZ: Europe/Istanbul
+      MQTT_HOST: mosquitto
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_ORG: ${INFLUX_ORG}
+      INFLUX_TOKEN: ${INFLUX_TOKEN}
+    volumes:
+      - ./nodered/flows.json:/data/flows.json
+    depends_on:
+      - mosquitto
+      - influxdb
+
+  simulator:
+    build: ./simulator
+    restart: unless-stopped
+    environment:
+      MQTT_URL: mqtt://mosquitto:1883
+      PROFIL: ${PROFIL}
+      HIZ: ${HIZ}
+      TOHUM: ${TOHUM}
+      AGIL: agil-sim
+    depends_on:
+      - mosquitto
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      INFLUX_ORG: ${INFLUX_ORG}
+      INFLUX_TOKEN: ${INFLUX_TOKEN}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DEFAULT_LOCALE: tr-TR
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/suru.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - influxdb
+
+volumes:
+  influx-veri:

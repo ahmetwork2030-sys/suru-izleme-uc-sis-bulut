@@ -1,0 +1,200 @@
+<title>Sürü İzleme Simülatörü</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* VOICE: yayla haritası gibi sakin ve okunaklı; her aşamayı hocanın görebileceği açıklıkta.
+   IDEA: kuş bakışı bir arazi atlası ile içine girilebilen istasyonlar (mera, ağıl kapısı, köydeki sis düğümü, bulut).
+   PICTURE: kabartmalı arazi üzerinde sürü, çoban, ağıl ve köy; yakın sahnelerde koyunlar, koridor ve devreler.
+   COLOUR and TYPE: meranın yeşili ve toprağın kahvesi, gece için lacivert; Space Grotesk başlık, Inter metin, Plex Mono ölçüm.
+   LAYOUT: üstte ayarlar ve sahne sekmeleri, solda büyük sahne, sağda aşama aşama anlatım ve canlı durum, altta olaylar. */
+:root {
+  --bg: #eef1e8; --surface: #ffffff; --surface-2: #f1f4ec; --line: #d4dbcc; --fg: #1b261e; --muted: #5a675c;
+  --accent: #1f6f5c; --accent-soft: #dbeee6; --warm: #b2621a; --alarm: #c2410c; --ok: #2f7d32; --sky: #2563a8;
+  --k: #55677a; --s: #a8641a; --u: #1f6f5c;
+  --f-text: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111713; --surface: #18201a; --surface-2: #1f2921; --line: #2e3a31; --fg: #e5ece6; --muted: #9caa9f;
+    --accent: #5fc3a6; --accent-soft: #1b3a31; --warm: #e39a55; --alarm: #f08a5d; --ok: #7cc77f; --sky: #6aa8ec;
+    --k: #9fb2c6; --s: #e3a35a; --u: #5fc3a6; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111713; --surface: #18201a; --surface-2: #1f2921; --line: #2e3a31; --fg: #e5ece6; --muted: #9caa9f;
+  --accent: #5fc3a6; --accent-soft: #1b3a31; --warm: #e39a55; --alarm: #f08a5d; --ok: #7cc77f; --sky: #6aa8ec;
+  --k: #9fb2c6; --s: #e3a35a; --u: #5fc3a6; color-scheme: dark;
+}
+* { box-sizing: border-box; min-width: 0; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-text); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1360px; margin: 0 auto; padding-block: 18px 40px; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+h1, h2, h3 { font-family: var(--f-head); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.4rem, 2.4vw, 1.9rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.08rem; font-weight: 600; }
+h3 { font-size: 0.98rem; font-weight: 600; }
+.sub { color: var(--muted); max-width: 92ch; margin: 4px 0 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.grp { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lbl { font-size: 12px; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--fg); padding: 8px 11px; font: 500 13px var(--f-text); cursor: pointer; border-right: 1px solid var(--line); min-height: 38px; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.btn { border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); padding: 8px 13px; border-radius: 8px; font: 500 13px var(--f-text); cursor: pointer; min-height: 38px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:focus-visible, .seg button:focus-visible, select:focus-visible, .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+select { font: 500 13px var(--f-text); padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); min-height: 38px; }
+.pnote { color: var(--muted); font-size: 12.5px; flex-basis: 100%; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 8px 14px; font: 600 13px var(--f-head); cursor: pointer; display: inline-flex; gap: 7px; align-items: center; min-height: 38px; }
+.tab .n { font: 500 11px var(--f-mono); color: var(--muted); }
+.tab[aria-selected="true"] { background: var(--fg); color: var(--surface); border-color: var(--fg); }
+.tab[aria-selected="true"] .n { color: var(--surface); opacity: .7; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 14px; align-items: start; }
+@media (max-width: 980px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { padding: 0; overflow: hidden; position: relative; }
+.stage canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; }
+.stagebar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 10px 12px; border-top: 1px solid var(--line); }
+.cap { font-size: 13px; color: var(--fg); max-width: 80ch; }
+.cap b { font-family: var(--f-head); }
+.subctl { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.subctl .seg button { padding: 6px 10px; min-height: 34px; font-size: 12.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 12px 10px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.results { display: none; padding: 14px; }
+.stage.sonuc canvas, .stage.sonuc .legend { display: none; }
+.stage.sonuc .results { display: block; }
+.side { display: grid; gap: 14px; }
+.tour h2 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.tour .stepno { font: 500 12px var(--f-mono); color: var(--muted); }
+.tour h3 { margin-top: 8px; font-size: 1.05rem; }
+.tour .txt { font-size: 13.5px; margin-top: 6px; }
+.tour .txt p { margin: 0 0 8px; }
+.tour ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+.tour li { margin-bottom: 3px; }
+.tour .nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.dots { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.dots button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); font: 500 11px var(--f-mono); cursor: pointer; padding: 0; }
+.dots button[aria-current="step"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.live .clock { display: flex; justify-content: space-between; align-items: baseline; }
+.live .time { font: 500 1.6rem var(--f-mono); font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
+.chip.on { color: var(--ok); border-color: var(--ok); }
+.chip.off { color: var(--alarm); border-color: var(--alarm); }
+.cmp { display: grid; gap: 7px; margin-top: 10px; }
+.cmp .row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.cmp .bar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.cmp .bar i { display: block; height: 100%; border-radius: 4px; }
+.cmp .v { font: 500 12px var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmp h3 { font-size: 12.5px; color: var(--muted); font-weight: 500; font-family: var(--f-text); margin-top: 4px; }
+.log { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; margin-top: 8px; align-content: start; }
+.ev { display: grid; gap: 4px; padding: 8px; border-radius: 8px; background: var(--surface-2); }
+.ev .t { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.ev .txt { font-size: 13px; }
+.ev .dl { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-family: var(--f-mono); font-size: 11.5px; padding: 2px 7px; border-radius: 5px; border: 1px solid var(--line); background: var(--surface); }
+.tag.K { color: var(--k); } .tag.S { color: var(--s); } .tag.U { color: var(--u); } .tag.wait { color: var(--alarm); }
+.empty { color: var(--muted); font-size: 13px; padding: 6px; }
+.tablewrap { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; }
+td.num { font-family: var(--f-mono); }
+tr.U td { background: var(--accent-soft); }
+.note { color: var(--muted); font-size: 12.5px; margin-top: 8px; max-width: 95ch; }
+.bars { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); margin-top: 12px; }
+.bars .b { border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.bars .r { display: grid; grid-template-columns: 34px minmax(0, 1fr) 96px; gap: 8px; align-items: center; font-size: 12px; margin-top: 6px; }
+.bars .r .bar { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.bars .r .bar i { display: block; height: 100%; }
+.bars .r .v { font-family: var(--f-mono); text-align: right; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Sürü İzleme Simülatörü · uç, sis ve bulut aşama aşama</h1>
+    <p class="sub">500 hayvanlık bir sürü bir gün boyunca dağda otlar, akşam ağıla döner. Hayvanların üstündeki etiketler, çobanın cebindeki mobil sis düğümü, köydeki sabit sis düğümü ve bulut aynı simülasyonda birlikte çalışır. Sekmelerden her istasyonun içine girebilir, sağdaki anlatımla adım adım ilerleyebilirsiniz.</p>
+  </header>
+
+  <section class="card controls" aria-label="Simülasyon ayarları">
+    <div class="grp"><span class="lbl">Bağlantı profili</span><div class="seg" role="group" aria-label="Bağlantı profili" id="profiles"></div></div>
+    <div class="grp"><span class="lbl">Hız</span>
+      <select id="speed" aria-label="Simülasyon hızı">
+        <option value="6">En yavaş · 1 saat ≈ 10 sn</option>
+        <option value="15">Çok yavaş · 1 saat ≈ 4 sn</option>
+        <option value="30">Yavaş · 1 saat ≈ 2 sn</option>
+        <option value="60" selected>Normal · 1 saat ≈ 1 sn</option>
+        <option value="180">Hızlı · 1 gün ≈ 8 sn</option>
+        <option value="720">Çok hızlı · 1 gün ≈ 2 sn</option>
+      </select></div>
+    <div class="grp">
+      <button class="btn primary" id="play" type="button">Duraklat</button>
+      <button class="btn" id="hour" type="button">1 saat ileri</button>
+      <button class="btn" id="reset" type="button">Yeni senaryo</button>
+    </div>
+    <span class="pnote" id="pnote"></span>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Sahneler" id="tabs"></nav>
+
+  <div class="main">
+    <section class="card stage" id="stage" aria-label="Sahne">
+      <canvas id="cv" aria-label="Simülasyon sahnesi"></canvas>
+      <div class="results" id="results">
+        <h2>30 günlük toplu deney: üç yöntem, dört bağlantı profili</h2>
+        <div class="bars" id="bars"></div>
+        <div class="tablewrap"><table id="batch"></table></div>
+        <p class="note" id="batchnote"></p>
+      </div>
+      <div class="stagebar">
+        <div class="cap" id="cap"></div>
+        <div class="subctl" id="subctl"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <aside class="side">
+      <section class="card tour" aria-label="Aşama aşama anlatım">
+        <h2>Aşama aşama <span class="stepno" id="stepno"></span></h2>
+        <div class="dots" id="dots"></div>
+        <h3 id="stitle"></h3>
+        <div class="txt" id="stext"></div>
+        <ul id="slook"></ul>
+        <div class="nav">
+          <button class="btn" id="prev" type="button">← Önceki</button>
+          <button class="btn primary" id="next" type="button">Sonraki →</button>
+        </div>
+      </section>
+      <section class="card live" aria-label="Canlı durum">
+        <div class="clock"><h2 id="dayl">Gün 1</h2><span class="time" id="time">00:00</span></div>
+        <div class="chips" id="chips"></div>
+        <div class="cmp" id="cmp"></div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="card" aria-label="Olay akışı">
+    <h2>Olaylar ve alarmın çobana ulaştığı an</h2>
+    <div class="log" id="log"></div>
+  </section>
+</div>
+
+<script>
+/*__ENGINE__*/
+</script>
+<script>
+window.TOPLU_DENEY = /*__OZET__*/;
+</script>
+<script>
+/*__APP__*/
+</script>

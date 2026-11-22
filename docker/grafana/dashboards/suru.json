@@ -1,0 +1,1036 @@
+{
+  "uid": "suru-izleme",
+  "title": "Sürü İzleme · Sis ve Bulut",
+  "tags": [
+    "bis505",
+    "suru"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Ağıldaki hayvan · simülasyon",
+      "description": "Simülatördeki sürünün kapı sayımı (500 hayvan).",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"sis\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"kapi\" and r._field == \"icerde\" and r.agil == \"agil-sim\")\n  |> group()\n  |> sort(columns: [\"_time\"])\n  |> last()"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Ağıldaki hayvan · Wokwi kapısı",
+      "description": "Wokwi'deki ağıl kapısı okuyucusundan köprüyle gelen sayım.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"sis\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"kapi\" and r._field == \"icerde\" and r.agil == \"agil1\")\n  |> group()\n  |> sort(columns: [\"_time\"])\n  |> last()"
+        }
+      ],
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Buluta gitmeyi bekleyen mesaj",
+      "description": "Node-RED'de \"İnterneti kes\" ile bağlantı kesilince bağlantı yöneticisinin kuyruğu.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"sis\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"olcut\" and r._field == \"bekleyen\")\n  |> group()\n  |> sort(columns: [\"_time\"])\n  |> last()"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "text",
+      "title": "Bu pano",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**\"sis\"** kovası sabit sis düğümünün yerel ham verisidir. **\"bulut\"** kovası yalnızca acil olayları ve günlük özetleri tutar. Alttaki iki grafik, aynı sürü için klasik yöntemin ve Uyuyan Bulut'un buluta göndereceği mesaj ve veri miktarını karşılaştırır (logaritmik eksen)."
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Buluta giden mesaj (toplam)",
+      "description": "Klasik yöntemde her okuma ve kapı geçişi ayrı mesajdır.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"sis\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"olcut\" and r.agil == \"agil-sim\" and (r._field == \"klasik_mesaj\" or r._field == \"uyuyan_mesaj\"))\n  |> map(fn: (r) => ({ r with _field: if r._field == \"klasik_mesaj\" then \"Klasik: her kayıt ayrı mesaj\" else \"Uyuyan Bulut: acil + günlük özet\" }))"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "scaleDistribution": {
+              "type": "log",
+              "log": 10
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Klasik.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8091a5"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Uyuyan.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#2a9d7f"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "İnternet hattından geçen veri (KB, toplam)",
+      "description": "Mesaj başına 150 bayt protokol yükü dahil.",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"sis\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"olcut\" and r.agil == \"agil-sim\" and (r._field == \"klasik_kb\" or r._field == \"uyuyan_kb\"))\n  |> map(fn: (r) => ({ r with _field: if r._field == \"klasik_kb\" then \"Klasik\" else \"Uyuyan Bulut\" }))"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kbytes",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "scaleDistribution": {
+              "type": "log",
+              "log": 10
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Klasik.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8091a5"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Uyuyan.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#2a9d7f"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "type": "geomap",
+      "title": "Sürü · son konumlar (önder tasmaları ve LoRa etiketleri)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"sis\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => r._measurement == \"okuma\" and r.agil == \"agil-sim\" and (r._field == \"lat\" or r._field == \"lon\"))\n  |> last()\n  |> group(columns: [\"etiket\", \"cihaz\"])\n  |> pivot(rowKey: [\"etiket\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> keep(columns: [\"etiket\", \"cihaz\", \"lat\", \"lon\"])"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 14,
+        "h": 12
+      },
+      "options": {
+        "view": {
+          "id": "coords",
+          "lat": 40.5725,
+          "lon": 42.027,
+          "zoom": 12.5
+        },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": true
+        },
+        "basemap": {
+          "type": "osm-standard",
+          "name": "OpenStreetMap",
+          "config": {}
+        },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "Hayvanlar",
+            "location": {
+              "mode": "auto"
+            },
+            "tooltip": true,
+            "config": {
+              "showLegend": false,
+              "style": {
+                "size": {
+                  "fixed": 6
+                },
+                "color": {
+                  "fixed": "#2563a8"
+                },
+                "opacity": 0.85,
+                "symbol": {
+                  "mode": "fixed",
+                  "fixed": "img/icons/marker/circle.svg"
+                }
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Buluta ulaşan alarmlar",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"bulut\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"alarm\" and r._field == \"etiket\")\n  |> group()\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 25)\n  |> keep(columns: [\"_time\", \"agil\", \"tur\", \"_value\"])\n  |> rename(columns: {_value: \"etiket\"})"
+        }
+      ],
+      "gridPos": {
+        "x": 14,
+        "y": 13,
+        "w": 10,
+        "h": 12
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Zaman"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "agil"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ağıl"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tur"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Olay"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "kopma": {
+                        "text": "Sürüden ayrılma",
+                        "color": "orange"
+                      },
+                      "hareketsiz": {
+                        "text": "Hareketsizlik",
+                        "color": "orange"
+                      },
+                      "yasak": {
+                        "text": "Yasak alan",
+                        "color": "red"
+                      },
+                      "eksik": {
+                        "text": "Akşam sayımında eksik",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "etiket"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Etiket"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "type": "bargauge",
+      "title": "Günlük özetten: en çok yürüyen hayvanlar (bulut)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"bulut\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"ozet\" and r._field == \"mesafe_m\" and r.agil == \"agil-sim\")\n  |> last()\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> limit(n: 15)\n  |> map(fn: (r) => ({ etiket: \"Etiket \" + r.etiket, \"Günlük yürüme (m)\": r._value }))"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 24,
+        "h": 8
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#2a9d7f"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Gönderilen bildirimler (⑭) · çoban ve mal sahibi",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"bulut\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"bildirim\")\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ r with kupe: if exists r.kupe then r.kupe else \"\", sim_saat: if exists r.sim_saat then r.sim_saat else \"\" }))\n  |> group()\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 100)\n  |> keep(columns: [\"_time\", \"sim_saat\", \"alici\", \"kisi\", \"kanal\", \"tur\", \"etiket\", \"kupe\", \"mesaj\"])"
+        }
+      ],
+      "description": "Bulutun bildirim servisi, buluta ulaşan her acil olayı hayvan kaydına bakarak çobana ve hayvanın sahibine gönderir. Mal sahibi bildirimi kendi seçtiği kanaldan (push ya da SMS) alır. Kişi adları ve küpe numaraları uydurmadır.",
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 16,
+        "h": 12
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "_time": 0,
+              "sim_saat": 1,
+              "tur": 2,
+              "alici": 3,
+              "kisi": 4,
+              "kanal": 5,
+              "etiket": 6,
+              "kupe": 7,
+              "mesaj": 8
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Zaman",
+            "desc": true
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Zaman"
+              },
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sim_saat"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Sim. saati"
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "alici"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Alıcı"
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kisi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Kişi"
+              },
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kanal"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Kanal"
+              },
+              {
+                "id": "custom.width",
+                "value": 65
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "SMS": {
+                        "color": "orange",
+                        "index": 0
+                      },
+                      "push": {
+                        "color": "blue",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tur"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Olay"
+              },
+              {
+                "id": "custom.width",
+                "value": 130
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "kopma": {
+                        "text": "Sürüden ayrılma",
+                        "index": 0
+                      },
+                      "hareketsiz": {
+                        "text": "Hareketsizlik",
+                        "index": 1
+                      },
+                      "yasak": {
+                        "text": "Yasak alan",
+                        "index": 2
+                      },
+                      "eksik": {
+                        "text": "Sayımda eksik",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "etiket"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Etiket"
+              },
+              {
+                "id": "custom.width",
+                "value": 65
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kupe"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Resmi küpe"
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mesaj"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Mesaj"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Bildirim kanalı",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"bulut\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"bildirim\" and r._field == \"adet\")\n  |> group(columns: [\"kanal\"])\n  |> count()\n  |> group()\n  |> map(fn: (r) => ({ _time: now(), kanal: r.kanal, _value: r._value }))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"kanal\"], valueColumn: \"_value\")\n  |> drop(columns: [\"_time\"])"
+        }
+      ],
+      "description": "Push mobil uygulamaya gider. SMS yalnızca uygulaması olmayan mal sahiplerine gider; bölge ölçeğinde maliyetin büyük kısmı SMS'tir (rapor Bölüm 7.2).",
+      "gridPos": {
+        "x": 16,
+        "y": 33,
+        "w": 8,
+        "h": 4
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "push"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794f2"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Push"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SMS"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ff9830"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Hayvan kaydı · mal sahipleri",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influx-suru"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influx-suru"
+          },
+          "query": "from(bucket: \"bulut\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r._measurement == \"sahip\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: string(v: r._value) }))\n  |> group(columns: [\"kod\"])\n  |> pivot(rowKey: [\"kod\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> keep(columns: [\"kod\", \"ad\", \"hayvan\", \"kanal\", \"bildirim\"])\n  |> sort(columns: [\"kod\"])"
+        }
+      ],
+      "description": "Buluttaki \"Cihaz ve profil yönetimi\" her etiketin hangi hayvana (resmi kulak küpesi) ve hangi mal sahibine ait olduğunu tutar. Köy sürüsünde 500 hayvan 14 aileye aittir; tek çoban hepsini otlatır.",
+      "gridPos": {
+        "x": 16,
+        "y": 37,
+        "w": 8,
+        "h": 8
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "kod": 0,
+              "ad": 1,
+              "hayvan": 2,
+              "kanal": 3,
+              "bildirim": 4
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kod"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Kod"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ad"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ad"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hayvan"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Hayvan"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kanal"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Kanal"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bildirim"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Bildirim"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "suru-simulator",
+  "version": "1.0.0",
+  "description": "Sürü simülatörünü yerel MQTT broker'a bağlayan yayıncı (BIS505 Dönem Projesi)",
+  "main": "yayinci.js",
+  "private": true,
+  "scripts": { "start": "node yayinci.js" },
+  "dependencies": { "mqtt": "5.10.1" }
+}

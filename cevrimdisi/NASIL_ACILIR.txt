@@ -1,0 +1,19 @@
+SÜRÜ İZLEME SİMÜLATÖRÜ · NASIL AÇILIR
+BIS505 Bulut Bilişimde İleri Teknikler · Ahmet ATAGÜL (251129017)
+
+1. "Suru_Izleme_Simulatoru.html" dosyasına çift tıklayın.
+   Bilgisayardaki tarayıcıda açılır (Chrome, Edge, Firefox ya da Safari).
+2. İnternet gerekmez, kurulum yoktur. Dosya tek başına çalışır.
+3. Sağdaki "Aşama aşama" bölümünde "Sonraki →" düğmesiyle 10 adımı sırayla izleyin:
+   1 Sistemin tamamı      2 Sabah ağıl kapısından çıkış   3 Önder tasması
+   4 LoRa etiketi ve mobil sis   5 Sürüden ayrılan hayvan   6 Köydeki sis düğümü
+   7 Akşam dönüşü ve sayım   8 Gece: Uyuyan Bulut   9 Bulut   10 30 günlük sonuçlar
+4. Üstteki sekmelerle istediğiniz istasyona doğrudan geçebilirsiniz.
+   Kuş bakışı haritada bir sürüye, ağıla, köye ya da buluta tıklamak da o sahneyi açar.
+5. "Hız" menüsünden simülasyonu yavaşlatabilir ya da hızlandırabilirsiniz.
+   "Bağlantı profili" (P1–P4) internet ve telefon kapsamasını değiştirir.
+
+Dosya tarayıcı yerine başka bir programla açılırsa:
+   sağ tık → Birlikte aç → Google Chrome ya da Microsoft Edge.
+
+Yazı tipleri (Inter, Space Grotesk, IBM Plex Mono) SIL Open Font License ile dağıtılır.

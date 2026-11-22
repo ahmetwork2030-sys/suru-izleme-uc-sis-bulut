@@ -1,0 +1,693 @@
+[
+  {
+    "id": "sis_sekme",
+    "type": "tab",
+    "label": "Sabit sis düğümü",
+    "disabled": false,
+    "info": "BIS505 Dönem Projesi · sabit sis düğümünün Node-RED karşılığı. Akış numaraları rapordaki Şekil 1 ile aynıdır."
+  },
+  {
+    "id": "broker",
+    "type": "mqtt-broker",
+    "name": "Yerel broker",
+    "broker": "${MQTT_HOST}",
+    "port": "1883",
+    "clientid": "nodered-sis",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true,
+    "autoUnsubscribe": true
+  },
+  {
+    "id": "not1",
+    "type": "comment",
+    "z": "sis_sekme",
+    "name": "Okumalar: LoRaWAN ağ sunucusu → yerel broker (⑥) → kural motoru (⑦) → önem puanlama",
+    "info": "",
+    "x": 330,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "mq_lora",
+    "type": "mqtt in",
+    "z": "sis_sekme",
+    "name": "LoRa okumaları",
+    "topic": "bis505-suru/+/lora/+",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 130,
+    "y": 100,
+    "wires": [
+      [
+        "kural"
+      ]
+    ]
+  },
+  {
+    "id": "kural",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Kural motoru (⑦)",
+    "func": "// Kural motoru (mimaride ⑦): kopma, hareketsizlik ve yasak alan kuralları\nconst r = msg.payload;\nconst agil = msg.topic.split('/')[1];\nconst durum = flow.get('kural_' + agil) || { gecmis: {}, onder: {}, son: {} };\nconst AGIL = { x: 900, y: 2500 };\nconst YASAK = { x0: 4500, x1: 5000, y0: 4300, y1: 4700 };   // ekili tarla\nconst gun = Math.floor(r.t / 1440);\nconst alarmlar = [];\nfunction alarm(tur) {\n  const anahtar = r.etiket + '|' + tur;\n  const son = durum.son[anahtar];\n  // aynı durum için tekrar alarm yok: yasak alanda 2 saat, diğerlerinde aynı gün\n  if (son !== undefined && (tur === 'yasak' ? r.t - son < 120 : Math.floor(son / 1440) === gun)) return;\n  durum.son[anahtar] = r.t;\n  alarmlar.push({ topic: 'alarm', payload: { tur, etiket: r.etiket, agil, t: r.t, sim_saat: r.sim_saat, lat: r.lat, lon: r.lon } });\n}\nconst disarida = !r.agilda && Math.hypot(r.x - AGIL.x, r.y - AGIL.y) > 300;\nif (r.cihaz === 'tasma') {\n  durum.onder[r.grup] = r;\n  if (r.x >= YASAK.x0 && r.x <= YASAK.x1 && r.y >= YASAK.y0 && r.y <= YASAK.y1) alarm('yasak');\n} else if (disarida) {\n  const g = durum.gecmis[r.etiket] || [];\n  g.push({ t: r.t, h: r.hareket_m, uz: null });\n  while (g.length > 4) g.shift();\n  durum.gecmis[r.etiket] = g;\n  if (g.length === 4 && g.every(k => k.h < 8)) alarm('hareketsiz');\n  const o = durum.onder[r.grup];\n  // önderin son okuması 15 dakikadan yeni ve sürü yürümüyorsa uzaklığı ölç\n  if (o && !o.agilda && Math.abs(o.t - r.t) <= 15 && o.hareket_m < 375) g[g.length - 1].uz = Math.hypot(r.x - o.x, r.y - o.y);\n  const s2 = g.slice(-2);\n  if (s2.length === 2 && s2.every(k => k.uz !== null && k.uz > 400)) alarm('kopma');\n} else {\n  durum.gecmis[r.etiket] = [];\n}\nflow.set('kural_' + agil, durum);\nmsg.agil = agil;\nreturn [alarmlar.length ? alarmlar : null, msg];",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 100,
+    "wires": [
+      [
+        "onem"
+      ],
+      [
+        "onem"
+      ]
+    ]
+  },
+  {
+    "id": "onem",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Önem puanlama",
+    "func": "// Önem puanlama: alarm acil (⑨), olağan okuma rutin (⑩)\nif (msg.topic === 'alarm') {\n  msg.onem = 1.0;\n  msg.yol = 'acil';\n  msg.kayit = { olcum: 'alarm', etiketler: { agil: msg.payload.agil, tur: msg.payload.tur }, alanlar: { etiket: msg.payload.etiket, lat: msg.payload.lat, lon: msg.payload.lon, sim_saat: msg.payload.sim_saat } };\n  return [msg, null];\n}\nmsg.onem = 0.1;\nreturn [null, msg];",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 560,
+    "y": 100,
+    "wires": [
+      [
+        "baglanti"
+      ],
+      [
+        "tampon"
+      ]
+    ]
+  },
+  {
+    "id": "tampon",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Tampon ve özetleme (⑩)",
+    "func": "// Tampon ve özetleme: ham okuma sis kovasına yazılır (yerel tampon), gün dönünce özet çıkarılır.\n// Klasik yöntem her okumayı ayrı mesajla buluta gönderirdi; karşılaştırma için sayılır.\nconst r = msg.payload, agil = msg.agil;\nconst say = flow.get('sayac_' + agil) || { klasik: 0, klasik_b: 0, uyuyan: 0, uyuyan_b: 0 };\nsay.klasik += 1; say.klasik_b += JSON.stringify(r).length + 150;\nflow.set('sayac_' + agil, say);\n\nconst ozet = flow.get('ozet_' + agil) || { gun: Math.floor(r.t / 1440), hayvan: {} };\nconst gun = Math.floor(r.t / 1440);\nlet cikti = null;\nif (gun > ozet.gun) {\n  const satirlar = Object.entries(ozet.hayvan).map(([etiket, h]) => ({\n    olcum: 'ozet', etiketler: { agil, etiket, cihaz: h.cihaz },\n    alanlar: { gun: ozet.gun + 1, okuma: h.n, mesafe_m: Math.round(h.mesafe), son_lat: h.lat, son_lon: h.lon }\n  }));\n  cikti = { yol: 'rutin', agil, kayitlar: satirlar, boyut: Math.round(JSON.stringify(satirlar).length / 3) };\n  ozet.gun = gun; ozet.hayvan = {};\n}\nconst h = ozet.hayvan[r.etiket] || { n: 0, mesafe: 0, lat: r.lat, lon: r.lon, cihaz: r.cihaz };\nh.n++; h.mesafe += r.hareket_m || 0; h.lat = r.lat; h.lon = r.lon;\nozet.hayvan[r.etiket] = h;\nflow.set('ozet_' + agil, ozet);\n\nconst ham = { kova: 'sis', kayit: { olcum: 'okuma', etiketler: { agil, etiket: String(r.etiket), cihaz: r.cihaz },\n  alanlar: { lat: r.lat, lon: r.lon, hareket_m: r.hareket_m, grup: r.grup, agilda: !!r.agilda } } };\nreturn [ham, cikti];",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 800,
+    "y": 160,
+    "wires": [
+      [
+        "yazici"
+      ],
+      [
+        "baglanti"
+      ]
+    ]
+  },
+  {
+    "id": "not2",
+    "type": "comment",
+    "z": "sis_sekme",
+    "name": "Ağıl kapısı ve akşam sayımı (simülatör ve Wokwi okuyucusu)",
+    "info": "",
+    "x": 300,
+    "y": 240,
+    "wires": []
+  },
+  {
+    "id": "mq_kapi",
+    "type": "mqtt in",
+    "z": "sis_sekme",
+    "name": "Kapı geçişleri",
+    "topic": "bis505-suru/+/kapi",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 130,
+    "y": 300,
+    "wires": [
+      [
+        "kapi"
+      ]
+    ]
+  },
+  {
+    "id": "kapi",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Kapı kaydı",
+    "func": "// Ağıl kapısı (② ⑥): simülatörden ve Wokwi'deki okuyucudan gelen geçişler\nconst r = msg.payload, agil = msg.topic.split('/')[1];\nconst say = flow.get('sayac_' + agil) || { klasik: 0, klasik_b: 0, uyuyan: 0, uyuyan_b: 0 };\nsay.klasik += 1; say.klasik_b += JSON.stringify(r).length + 150;\nflow.set('sayac_' + agil, say);\nconst alanlar = { etiket: r.etiket, sira: r.sira || 0 };\nif (r.icerde !== undefined) alanlar.icerde = r.icerde;\nreturn { kova: 'sis', kayit: { olcum: 'kapi', etiketler: { agil, yon: r.yon }, alanlar } };",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 300,
+    "wires": [
+      [
+        "yazici"
+      ]
+    ]
+  },
+  {
+    "id": "mq_sayim",
+    "type": "mqtt in",
+    "z": "sis_sekme",
+    "name": "Akşam sayımı",
+    "topic": "bis505-suru/+/sayim",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "broker",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 130,
+    "y": 360,
+    "wires": [
+      [
+        "sayim"
+      ]
+    ]
+  },
+  {
+    "id": "sayim",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Sayım ve eksik",
+    "func": "// Akşam sayımı: eksik hayvan acil olaydır\nconst r = msg.payload, agil = msg.topic.split('/')[1];\nconst eksik = (r.eksik || []).slice(0, 50);\nconst kayitlar = [{ olcum: 'sayim', etiketler: { agil }, alanlar: { icerde: r.icerde, toplam: r.toplam || 500, eksik: (r.eksik || []).length } }]\n  .concat(eksik.map(e => ({ olcum: 'alarm', etiketler: { agil, tur: 'eksik' }, alanlar: { etiket: e, sim_saat: r.sim_saat || '' } })));\nnode.status({ fill: eksik.length ? 'red' : 'green', shape: 'dot', text: agil + ': ' + r.icerde + '/' + (r.toplam || 500) + (eksik.length ? ' · eksik ' + eksik.length : '') });\nreturn [{ kova: 'sis', kayit: kayitlar[0] }, { yol: 'acil', agil, kayitlar, boyut: JSON.stringify(kayitlar).length }];",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 360,
+    "wires": [
+      [
+        "yazici"
+      ],
+      [
+        "baglanti"
+      ]
+    ]
+  },
+  {
+    "id": "not3",
+    "type": "comment",
+    "z": "sis_sekme",
+    "name": "Bağlantı yöneticisi (⑪ ⑫): internet yokken bekletir, gelince önce acil sonra rutin",
+    "info": "",
+    "x": 360,
+    "y": 440,
+    "wires": []
+  },
+  {
+    "id": "baglanti",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Bağlantı yöneticisi",
+    "func": "// Bağlantı yöneticisi (⑪ ⑫): internet varken önce acil, sonra rutin kuyruğu gönderir; yokken bekletir.\nlet q = flow.get('kuyruk') || { acil: [], rutin: [] };\nif (msg.komut !== 'bosalt') {\n  const paket = msg.kayitlar ? { agil: msg.agil, kayitlar: msg.kayitlar, boyut: msg.boyut }\n                             : { agil: msg.payload.agil, kayitlar: [msg.kayit], boyut: JSON.stringify(msg.kayit).length };\n  q[msg.yol === 'acil' ? 'acil' : 'rutin'].push(paket);\n}\nconst internet = flow.get('internet') !== false;\nif (!internet) {\n  flow.set('kuyruk', q);\n  node.status({ fill: 'red', shape: 'ring', text: 'İnternet yok · bekleyen ' + (q.acil.length + q.rutin.length) + ' mesaj' });\n  return null;\n}\nconst giden = q.acil.concat(q.rutin);\nflow.set('kuyruk', { acil: [], rutin: [] });\nconst cikti = [], bulut = [];\nfor (const p of giden) {\n  const say = flow.get('sayac_' + p.agil) || { klasik: 0, klasik_b: 0, uyuyan: 0, uyuyan_b: 0 };\n  say.uyuyan += 1; say.uyuyan_b += p.boyut + 150;           // her paket buluta tek mesaj\n  flow.set('sayac_' + p.agil, say);\n  for (const k of p.kayitlar) cikti.push({ kova: 'bulut', kayit: k });\n  // buluta ulaşan acil olaylar bildirim servisine de gider (⑬ ⑭)\n  const alarmlar = p.kayitlar.filter(k => k.olcum === 'alarm')\n    .map(k => ({ tur: k.etiketler.tur, etiket: k.alanlar.etiket, lat: k.alanlar.lat, lon: k.alanlar.lon, sim_saat: k.alanlar.sim_saat }));\n  if (alarmlar.length) bulut.push({ agil: p.agil, alarmlar });\n}\nconst top = (context.get('toplam') || 0) + giden.length;\ncontext.set('toplam', top);\nnode.status({ fill: 'green', shape: 'dot', text: 'İnternet var · buluta giden ' + top + ' mesaj' });\nreturn [cikti, bulut];",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 820,
+    "y": 300,
+    "wires": [
+      [
+        "yazici"
+      ],
+      [
+        "l_bulut_out"
+      ]
+    ]
+  },
+  {
+    "id": "l_bulut_out",
+    "type": "link out",
+    "z": "sis_sekme",
+    "name": "Buluta ulaşan acil olaylar",
+    "mode": "link",
+    "links": [
+      "l_bulut_in"
+    ],
+    "x": 1015,
+    "y": 260,
+    "wires": []
+  },
+  {
+    "id": "kes",
+    "type": "inject",
+    "z": "sis_sekme",
+    "name": "İnterneti kes",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 500,
+    "wires": [
+      [
+        "kes_fn"
+      ]
+    ]
+  },
+  {
+    "id": "kes_fn",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Bağlantı kesildi",
+    "func": "flow.set('internet', false);\nnode.status({ fill: 'red', shape: 'ring', text: 'İnternet kesildi' });\nreturn null;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 500,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "ver",
+    "type": "inject",
+    "z": "sis_sekme",
+    "name": "İnterneti ver",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 0.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 560,
+    "wires": [
+      [
+        "ver_fn"
+      ]
+    ]
+  },
+  {
+    "id": "ver_fn",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Bağlantı geldi",
+    "func": "flow.set('internet', true);\nnode.status({ fill: 'green', shape: 'dot', text: 'İnternet geldi' });\nreturn { komut: 'bosalt' };",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 560,
+    "wires": [
+      [
+        "baglanti"
+      ]
+    ]
+  },
+  {
+    "id": "not4",
+    "type": "comment",
+    "z": "sis_sekme",
+    "name": "Ölçütler ve InfluxDB yazımı (\"sis\" = yerel tampon, \"bulut\" = buluta giden)",
+    "info": "",
+    "x": 360,
+    "y": 640,
+    "wires": []
+  },
+  {
+    "id": "olcut_tik",
+    "type": "inject",
+    "z": "sis_sekme",
+    "name": "10 saniyede bir",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "10",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 8,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 700,
+    "wires": [
+      [
+        "olcut"
+      ]
+    ]
+  },
+  {
+    "id": "olcut",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Karşılaştırma ölçütleri",
+    "func": "// Karşılaştırma ölçütleri: buluta giden mesaj ve veri (klasik ile Uyuyan Bulut), bekleyen kuyruk\nconst q = flow.get('kuyruk') || { acil: [], rutin: [] };\nconst cikti = [];\nfor (const anahtar of flow.keys().filter(k => k.startsWith('sayac_'))) {\n  const agil = anahtar.slice(6), s = flow.get(anahtar);\n  cikti.push({ kova: 'sis', kayit: { olcum: 'olcut', etiketler: { agil }, alanlar: {\n    klasik_mesaj: s.klasik, uyuyan_mesaj: s.uyuyan,\n    klasik_kb: +(s.klasik_b / 1024).toFixed(1), uyuyan_kb: +(s.uyuyan_b / 1024).toFixed(1),\n    bekleyen: q.acil.length + q.rutin.length, internet: flow.get('internet') !== false } } });\n}\nreturn [cikti];",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 370,
+    "y": 700,
+    "wires": [
+      [
+        "yazici"
+      ]
+    ]
+  },
+  {
+    "id": "yazici",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "InfluxDB yazıcı",
+    "func": "// InfluxDB yazıcı: satır protokolüne çevirir, kova başına 1 saniyelik paketler hâlinde yazar\nfunction kac(s) { return String(s).replace(/[,= ]/g, m => '\\\\' + m); }\n// tamsayı alanları sabittir; diğer sayılar her zaman ondalıklı yazılır (InfluxDB alan türü çakışmasın)\nconst TAMSAYI = ['etiket', 'sira', 'icerde', 'toplam', 'eksik', 'okuma', 'gun', 'grup', 'mesafe_m', 'hareket_m', 'klasik_mesaj', 'uyuyan_mesaj', 'bekleyen', 'adet', 'hayvan', 'bildirim'];\nfunction alan(a, v) {\n  if (typeof v === 'boolean') return v ? 'true' : 'false';\n  if (typeof v === 'number') return TAMSAYI.includes(a) ? Math.round(v) + 'i' : String(v);\n  return '\"' + String(v).replace(/\\\\/g, '\\\\\\\\').replace(/\"/g, '\\\\\"') + '\"';\n}\nconst k = msg.kayit;\nconst et = Object.entries(k.etiketler || {}).filter(([, v]) => v !== undefined && v !== '').map(([a, v]) => ',' + kac(a) + '=' + kac(v)).join('');\nconst al = Object.entries(k.alanlar || {}).filter(([, v]) => v !== undefined && v !== null && !(typeof v === 'number' && !isFinite(v))).map(([a, v]) => kac(a) + '=' + alan(a, v)).join(',');\nif (!al) return null;\n// aynı milisaniyede yazılan iki satır aynı seriye düşüp birbirini ezmesin\nlet ts = Date.now();\nconst sonTs = context.get('son_ts') || 0;\nif (ts <= sonTs) ts = sonTs + 1;\ncontext.set('son_ts', ts);\nconst satir = kac(k.olcum) + et + ' ' + al + ' ' + ts;\nconst kova = msg.kova || 'sis';\nconst bekleyen = context.get('b_' + kova) || [];\nbekleyen.push(satir);\ncontext.set('b_' + kova, bekleyen);\nif (!context.get('z_' + kova)) {\n  context.set('z_' + kova, true);\n  setTimeout(() => {\n    const satirlar = context.get('b_' + kova) || [];\n    context.set('b_' + kova, []);\n    context.set('z_' + kova, false);\n    if (!satirlar.length) return;\n    node.send({\n      url: env.get('INFLUX_URL') + '/api/v2/write?org=' + encodeURIComponent(env.get('INFLUX_ORG')) + '&bucket=' + kova + '&precision=ms',\n      method: 'POST',\n      headers: { 'Authorization': 'Token ' + env.get('INFLUX_TOKEN'), 'Content-Type': 'text/plain; charset=utf-8' },\n      payload: satirlar.join('\\n'),\n      satirSayisi: satirlar.length, kova\n    });\n  }, 1000);\n}\nreturn null;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1060,
+    "y": 400,
+    "wires": [
+      [
+        "http"
+      ]
+    ]
+  },
+  {
+    "id": "http",
+    "type": "http request",
+    "z": "sis_sekme",
+    "name": "InfluxDB /api/v2/write",
+    "method": "use",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 1100,
+    "y": 480,
+    "wires": [
+      [
+        "kontrol"
+      ]
+    ]
+  },
+  {
+    "id": "kontrol",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Yazım kontrolü",
+    "func": "if (msg.statusCode !== 204) {\n  node.status({ fill: 'red', shape: 'dot', text: 'InfluxDB ' + msg.statusCode });\n  node.warn('InfluxDB yazımı başarısız (' + msg.statusCode + '): ' + String(msg.payload).slice(0, 200));\n} else {\n  const n = (context.get('n') || 0) + msg.satirSayisi;\n  context.set('n', n);\n  node.status({ fill: 'green', shape: 'dot', text: n + ' satır yazıldı' });\n}\nreturn null;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1110,
+    "y": 560,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "l_yaz_in",
+    "type": "link in",
+    "z": "sis_sekme",
+    "name": "Buluttan yazım",
+    "links": [
+      "l_yaz_out"
+    ],
+    "x": 905,
+    "y": 440,
+    "wires": [
+      [
+        "yazici"
+      ]
+    ]
+  },
+  {
+    "id": "geri_tik",
+    "type": "inject",
+    "z": "sis_sekme",
+    "name": "Açılışta",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 760,
+    "wires": [
+      [
+        "geri_sorgu"
+      ]
+    ]
+  },
+  {
+    "id": "geri_sorgu",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Sayaçları geri yükle",
+    "func": "// Node-RED yeniden başlarsa karşılaştırma sayaçları sıfırlanmasın: son değerleri InfluxDB'den oku\nmsg.url = env.get('INFLUX_URL') + '/api/v2/query?org=' + encodeURIComponent(env.get('INFLUX_ORG'));\nmsg.method = 'POST';\nmsg.headers = { 'Authorization': 'Token ' + env.get('INFLUX_TOKEN'), 'Content-Type': 'application/vnd.flux', 'Accept': 'application/csv' };\nmsg.payload = 'from(bucket: \"sis\") |> range(start: -30d) |> filter(fn: (r) => r._measurement == \"olcut\" and (r._field == \"klasik_mesaj\" or r._field == \"uyuyan_mesaj\" or r._field == \"klasik_kb\" or r._field == \"uyuyan_kb\")) |> last()';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 370,
+    "y": 760,
+    "wires": [
+      [
+        "geri_http"
+      ]
+    ]
+  },
+  {
+    "id": "geri_http",
+    "type": "http request",
+    "z": "sis_sekme",
+    "name": "InfluxDB /api/v2/query",
+    "method": "use",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 610,
+    "y": 760,
+    "wires": [
+      [
+        "geri_yukle"
+      ]
+    ]
+  },
+  {
+    "id": "geri_yukle",
+    "type": "function",
+    "z": "sis_sekme",
+    "name": "Sayaç geri yükleme",
+    "func": "if (msg.statusCode !== 200) { node.status({ fill: 'yellow', shape: 'ring', text: 'geri yükleme yok (' + msg.statusCode + ')' }); return null; }\nlet bas = null; const geri = {};\nfor (const satir of String(msg.payload).split(/\\r?\\n/)) {\n  if (!satir.trim()) { bas = null; continue; }\n  const h = satir.split(',');\n  if (h.includes('_field') && h.includes('_value')) { bas = h; continue; }\n  if (!bas) continue;\n  const agil = h[bas.indexOf('agil')], alan = h[bas.indexOf('_field')], v = Number(h[bas.indexOf('_value')]);\n  if (agil && isFinite(v)) (geri[agil] = geri[agil] || {})[alan] = v;\n}\nfor (const [agil, g] of Object.entries(geri)) {\n  const say = flow.get('sayac_' + agil) || { klasik: 0, klasik_b: 0, uyuyan: 0, uyuyan_b: 0 };\n  // sayaç bellekte duruyorsa (yalnızca yeniden dağıtım) zaten büyüktür; sıfırlandıysa son ölçüm üstüne eklenir\n  if (say.klasik < (g.klasik_mesaj || 0)) {\n    say.klasik += g.klasik_mesaj || 0; say.uyuyan += g.uyuyan_mesaj || 0;\n    say.klasik_b += (g.klasik_kb || 0) * 1024; say.uyuyan_b += (g.uyuyan_kb || 0) * 1024;\n  }\n  flow.set('sayac_' + agil, say);\n}\nnode.status({ fill: 'green', shape: 'dot', text: Object.keys(geri).length ? 'sayaçlar geri yüklendi: ' + Object.keys(geri).join(', ') : 'önceki ölçüm yok, sıfırdan' });\nreturn null;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 840,
+    "y": 760,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "bulut_sekme",
+    "type": "tab",
+    "label": "Bulut · kayıt ve bildirim",
+    "disabled": false,
+    "info": "Bulut tarafının gösterim için küçük karşılığı: akış işlemeden gelen acil olay, hayvan kaydına (Cihaz ve profil yönetimi) bakılarak çobana ve mal sahibine bildirilir (⑭). Kayıt src/kayit.js dosyasından üretilir; tarayıcı simülatörü de aynı dosyayı kullanır. Kişi adları ve küpe numaraları uydurmadır."
+  },
+  {
+    "id": "notb1",
+    "type": "comment",
+    "z": "bulut_sekme",
+    "name": "Buluta ulaşan acil olay → tekrar eleme → hayvan kaydı → çobana ve mal sahibine bildirim (⑬ ⑭)",
+    "info": "",
+    "x": 400,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "l_bulut_in",
+    "type": "link in",
+    "z": "bulut_sekme",
+    "name": "Sis düğümünden",
+    "links": [
+      "l_bulut_out"
+    ],
+    "x": 95,
+    "y": 100,
+    "wires": [
+      [
+        "bildirim"
+      ]
+    ]
+  },
+  {
+    "id": "bildirim",
+    "type": "function",
+    "z": "bulut_sekme",
+    "name": "Bildirim servisi (⑭)",
+    "func": "// Bildirim servisi (⑭): buluta ulaşan acil olayı kayda bakarak çobana ve mal sahibine gönderir.\n// Tekrar gelen olay (bağlantı kopup yeniden gönderilen paket) ikinci kez bildirim üretmez.\nconst K = context.get('K'), kayit = context.get('kayit');\nconst gorulen = context.get('gorulen') || {};\nconst gunNo = s => { const m = /Gün (\\d+)/.exec(s || ''); return m ? +m[1] : 0; };\nconst olaylar = [], eksik = [];\nlet sim_saat = '';\nfor (const a of msg.alarmlar) {\n  const anahtar = msg.agil + '|' + a.etiket + '|' + a.tur + '|' + gunNo(a.sim_saat);\n  if (gorulen[anahtar]) continue;\n  gorulen[anahtar] = Date.now();\n  sim_saat = a.sim_saat || sim_saat;\n  if (a.tur === 'eksik') eksik.push(a.etiket); else olaylar.push(a);\n}\nconst anahtarlar = Object.keys(gorulen);\nif (anahtarlar.length > 5000) anahtarlar.sort((x, y) => gorulen[x] - gorulen[y]).slice(0, 1000).forEach(k => delete gorulen[k]);\ncontext.set('gorulen', gorulen);\nlet bild = [];\nfor (const a of olaylar) bild = bild.concat(K.bildirimler(kayit, { tur: a.tur, etiketler: [a.etiket], lat: a.lat, lon: a.lon }));\nif (eksik.length) bild = bild.concat(K.bildirimler(kayit, { tur: 'eksik', etiketler: eksik }));\nconst sayac = global.get('bildirim_sayac') || { push: 0, SMS: 0, kisi: {} };\nconst cikti = bild.map(b => {\n  sayac[b.kanal] = (sayac[b.kanal] || 0) + 1;\n  sayac.kisi[b.kod] = (sayac.kisi[b.kod] || 0) + 1;\n  return { kova: 'bulut', kayit: { olcum: 'bildirim',\n    etiketler: { agil: msg.agil, alici: b.alici, kanal: b.kanal, tur: b.tur, kod: b.kod },\n    alanlar: { kisi: b.kod + ' ' + b.kisi, etiket: b.etiketler[0], adet: b.etiketler.length, kupe: b.kupe, mesaj: b.mesaj, sim_saat } } };\n});\nglobal.set('bildirim_sayac', sayac);\nnode.status({ fill: 'blue', shape: 'dot', text: 'push ' + sayac.push + ' · SMS ' + sayac.SMS });\nreturn [cikti];",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "// Hayvan kaydı (bulutta \"Cihaz ve profil yönetimi\"): etiket -> resmi küpe -> mal sahibi -> çoban\nconst module = { exports: {} };\n/* Hayvan kaydı ve bildirim yönlendirme\n * Mimaride iki bulut bileşeninin işi:\n *   - Cihaz ve profil yönetimi: etiket numarası -> resmi kulak küpesi -> mal sahibi -> sürü ve çoban\n *   - Bildirim servisi (⑭): acil olayı kayda bakarak çobana ve mal sahibine, mal sahibinin seçtiği kanaldan gönderir\n * Aynı dosya üç yerde kullanılır: tarayıcı simülatörü (window.SuruKayit), Node-RED bildirim servisi\n * (akis_uret.js koda gömer) ve Node.js (module.exports). Böylece üçü aynı kaydı üretir.\n * Kişi adları ve küpe numaraları uydurmadır (sentetik); gerçek kişi ya da hayvana ait değildir.\n */\n(function (kok, fabrika) {\n  var K = fabrika();\n  if (typeof module === 'object' && module && module.exports) module.exports = K;\n  else kok.SuruKayit = K;\n})(typeof window !== 'undefined' ? window : this, function () {\n  'use strict';\n\n  // Köy sürüsü: hayvanlar farklı ailelere aittir, tek çoban hepsini otlatır.\n  // kanal: push = mobil uygulama bildirimi, SMS = uygulaması olmayan mal sahibi (rapor Bölüm 7.2)\n  var SAHIPLER = [\n    { kod: 'MS-01', ad: 'Hasan K.', kanal: 'push', pay: 9 },\n    { kod: 'MS-02', ad: 'Ayşe D.', kanal: 'push', pay: 6 },\n    { kod: 'MS-03', ad: 'Mehmet Y.', kanal: 'SMS', pay: 8 },\n    { kod: 'MS-04', ad: 'Fatma Ö.', kanal: 'push', pay: 4 },\n    { kod: 'MS-05', ad: 'Ali Ç.', kanal: 'push', pay: 7 },\n    { kod: 'MS-06', ad: 'Zeynep A.', kanal: 'push', pay: 3 },\n    { kod: 'MS-07', ad: 'Hüseyin T.', kanal: 'SMS', pay: 10 },\n    { kod: 'MS-08', ad: 'Emine B.', kanal: 'push', pay: 5 },\n    { kod: 'MS-09', ad: 'İbrahim S.', kanal: 'push', pay: 6 },\n    { kod: 'MS-10', ad: 'Hatice G.', kanal: 'SMS', pay: 4 },\n    { kod: 'MS-11', ad: 'Mustafa E.', kanal: 'push', pay: 8 },\n    { kod: 'MS-12', ad: 'Elif K.', kanal: 'push', pay: 3 },\n    { kod: 'MS-13', ad: 'Osman Y.', kanal: 'SMS', pay: 5 },\n    { kod: 'MS-14', ad: 'Cemile A.', kanal: 'push', pay: 4 }\n  ];\n  var COBAN = { kod: 'CB-01', ad: 'Veli A.', kanal: 'push' };\n  var IL_KODU = '25';                         // Erzurum (gösterimdeki yayla Oltu civarında)\n\n  function rastgele(tohum) {                  // mulberry32: aynı tohum her yerde aynı kaydı verir\n    var a = tohum >>> 0;\n    return function () {\n      a = (a + 0x6D2B79F5) >>> 0;\n      var t = a;\n      t = Math.imul(t ^ (t >>> 15), t | 1);\n      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);\n      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n    };\n  }\n\n  // N hayvanlık kaydı kurar. Etiket numarası 1000 + sıra; sahiplik karışıktır (köy sürüsü).\n  function kur(N, tohum) {\n    N = N || 500;\n    var r = rastgele(tohum || 2026);\n    var sira = [];\n    for (var i = 0; i < N; i++) sira.push(i);\n    for (i = N - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), g = sira[i]; sira[i] = sira[j]; sira[j] = g; }\n    var payTop = SAHIPLER.reduce(function (s, o) { return s + o.pay; }, 0);\n    var sayilar = SAHIPLER.map(function (o) { return Math.floor(N * o.pay / payTop); });\n    var kalan = N - sayilar.reduce(function (s, v) { return s + v; }, 0);\n    for (i = 0; kalan > 0; i = (i + 1) % sayilar.length, kalan--) sayilar[i]++;\n    var hayvanlar = new Array(N), kupeler = {}, k = 0;\n    SAHIPLER.forEach(function (o, si) {\n      for (var n = 0; n < sayilar[si]; n++, k++) {\n        var idx = sira[k], kupe;\n        do { kupe = 'TR' + IL_KODU + String(10000000 + Math.floor(r() * 89999999)); } while (kupeler[kupe]);\n        kupeler[kupe] = true;\n        hayvanlar[idx] = { etiket: 1000 + idx, kupe: kupe, tur: r() < 0.16 ? 'keçi' : 'koyun', sahip: o.kod };\n      }\n    });\n    var sahipler = {};\n    SAHIPLER.forEach(function (o, si) { sahipler[o.kod] = { kod: o.kod, ad: o.ad, kanal: o.kanal, hayvan: sayilar[si] }; });\n    return { hayvanlar: hayvanlar, sahipler: sahipler, coban: COBAN, N: N };\n  }\n\n  function hayvan(kayit, etiket) { return kayit.hayvanlar[etiket - 1000] || null; }\n  function sahibi(kayit, etiket) { var h = hayvan(kayit, etiket); return h ? kayit.sahipler[h.sahip] : null; }\n\n  var OLAY = {\n    kopma: 'sürüden ayrıldı', hareketsiz: 'uzun süredir hareketsiz',\n    yasak: 'sürüsüyle yasak alana (ekili tarla) girdi', eksik: 'akşam sayımında ağıla dönmedi'\n  };\n  function sizin(tur) { return tur === 'keçi' ? 'keçiniz' : 'koyununuz'; }\n  function buyuk(s) { return s.charAt(0).toLocaleUpperCase('tr-TR') + s.slice(1); }\n  function konumYazi(o) { return o.lat ? ' Son konum ' + (+o.lat).toFixed(4) + ', ' + (+o.lon).toFixed(4) + '.' : ''; }\n\n  // Bir acil olayı bildirimlere çevirir.\n  // olay = { tur, etiketler: [1029, ...], lat?, lon? }  ->  [{ alici, kod, kisi, kanal, tur, etiketler, kupe, mesaj }]\n  // Kurallar:\n  //  - Çoban her acil olayı push ile alır (sahada ayrıca LoRa ile yerel alarm alır, ⑧).\n  //  - Mal sahibi yalnızca kendi hayvanının olayını, kendi seçtiği kanaldan alır.\n  //  - Akşam sayımındaki eksikler mal sahibine tek tek değil, sahip başına tek mesajda gider.\n  //  - Yasak alan sürü olayıdır (önder tasmasından gelir); tek bir mal sahibine ait değildir, yalnızca çobana gider.\n  function bildirimler(kayit, olay) {\n    var c = [], et = (olay.etiketler || []).filter(function (e) { return hayvan(kayit, e); });\n    if (!et.length) return c;\n    var cb = kayit.coban, tur = olay.tur;\n    if (tur === 'eksik') {\n      c.push({ alici: 'Çoban', kod: cb.kod, kisi: cb.ad, kanal: cb.kanal, tur: tur, etiketler: et, kupe: et.length + ' hayvan',\n               mesaj: 'Akşam sayımında ' + et.length + ' hayvan eksik: ' + et.slice(0, 8).join(', ') + (et.length > 8 ? ' …' : '') + '.' });\n      var grup = {};\n      et.forEach(function (e) { var h = hayvan(kayit, e); (grup[h.sahip] = grup[h.sahip] || []).push(h); });\n      Object.keys(grup).sort().forEach(function (kod) {\n        var o = kayit.sahipler[kod], hs = grup[kod];\n        c.push({ alici: 'Mal sahibi', kod: kod, kisi: o.ad, kanal: o.kanal, tur: tur, etiketler: hs.map(function (h) { return h.etiket; }),\n                 kupe: hs.map(function (h) { return h.kupe; }).join(' '),\n                 mesaj: 'Akşam sayımında ' + (hs.length === 1 ? sizin(hs[0].tur) + ' ' + hs[0].etiket + ' (' + hs[0].kupe + ')' : hs.length + ' hayvanınız (' + hs.map(function (h) { return h.etiket; }).join(', ') + ')') +\n                        ' ağıla dönmedi. Çoban ' + cb.ad + ' bilgilendirildi.' });\n      });\n      return c;\n    }\n    var h = hayvan(kayit, et[0]), o = kayit.sahipler[h.sahip];\n    c.push({ alici: 'Çoban', kod: cb.kod, kisi: cb.ad, kanal: cb.kanal, tur: tur, etiketler: [h.etiket], kupe: h.kupe,\n             mesaj: (tur === 'yasak' ? 'Sürü yasak alana (ekili tarla) girdi; önder ' + h.tur + ' ' + h.etiket + '.'\n                                      : buyuk(h.tur) + ' ' + h.etiket + ' (' + o.ad + ') ' + OLAY[tur] + '.') + konumYazi(olay) });\n    if (tur !== 'yasak') {\n      c.push({ alici: 'Mal sahibi', kod: o.kod, kisi: o.ad, kanal: o.kanal, tur: tur, etiketler: [h.etiket], kupe: h.kupe,\n               mesaj: buyuk(sizin(h.tur)) + ' ' + h.etiket + ' (' + h.kupe + ') ' + OLAY[tur] + '. Çoban ' + cb.ad + ' bilgilendirildi.' });\n    }\n    return c;\n  }\n\n  return { kur: kur, hayvan: hayvan, sahibi: sahibi, bildirimler: bildirimler, SAHIPLER: SAHIPLER, COBAN: COBAN, OLAY: OLAY };\n});\n\ncontext.set('K', module.exports);\ncontext.set('kayit', module.exports.kur(500));",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 100,
+    "wires": [
+      [
+        "l_yaz_out"
+      ]
+    ]
+  },
+  {
+    "id": "notb2",
+    "type": "comment",
+    "z": "bulut_sekme",
+    "name": "Hayvan kaydı: 500 hayvan, 14 mal sahibi, 1 çoban (Cihaz ve profil yönetimi)",
+    "info": "",
+    "x": 360,
+    "y": 180,
+    "wires": []
+  },
+  {
+    "id": "kayit_tik",
+    "type": "inject",
+    "z": "bulut_sekme",
+    "name": "Dakikada bir",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 3,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 130,
+    "y": 240,
+    "wires": [
+      [
+        "kayit_yaz"
+      ]
+    ]
+  },
+  {
+    "id": "kayit_yaz",
+    "type": "function",
+    "z": "bulut_sekme",
+    "name": "Mal sahipleri listesi",
+    "func": "// Mal sahipleri listesini panoya yazar: hayvan sayısı, bildirim kanalı, şimdiye kadarki bildirim sayısı\nconst kayit = context.get('kayit');\nconst sayac = global.get('bildirim_sayac') || { push: 0, SMS: 0, kisi: {} };\nconst cikti = Object.values(kayit.sahipler).map(o => ({ kova: 'bulut', kayit: { olcum: 'sahip', etiketler: { kod: o.kod },\n  alanlar: { ad: o.ad, hayvan: o.hayvan, kanal: o.kanal, bildirim: sayac.kisi[o.kod] || 0 } } }));\nconst c = kayit.coban;\ncikti.push({ kova: 'bulut', kayit: { olcum: 'sahip', etiketler: { kod: c.kod }, alanlar: { ad: c.ad + ' (çoban)', hayvan: kayit.N, kanal: c.kanal, bildirim: sayac.kisi[c.kod] || 0 } } });\nnode.status({ fill: 'green', shape: 'dot', text: Object.keys(kayit.sahipler).length + ' mal sahibi · ' + kayit.N + ' hayvan' });\nreturn [cikti];",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "// Hayvan kaydı (bulutta \"Cihaz ve profil yönetimi\"): etiket -> resmi küpe -> mal sahibi -> çoban\nconst module = { exports: {} };\n/* Hayvan kaydı ve bildirim yönlendirme\n * Mimaride iki bulut bileşeninin işi:\n *   - Cihaz ve profil yönetimi: etiket numarası -> resmi kulak küpesi -> mal sahibi -> sürü ve çoban\n *   - Bildirim servisi (⑭): acil olayı kayda bakarak çobana ve mal sahibine, mal sahibinin seçtiği kanaldan gönderir\n * Aynı dosya üç yerde kullanılır: tarayıcı simülatörü (window.SuruKayit), Node-RED bildirim servisi\n * (akis_uret.js koda gömer) ve Node.js (module.exports). Böylece üçü aynı kaydı üretir.\n * Kişi adları ve küpe numaraları uydurmadır (sentetik); gerçek kişi ya da hayvana ait değildir.\n */\n(function (kok, fabrika) {\n  var K = fabrika();\n  if (typeof module === 'object' && module && module.exports) module.exports = K;\n  else kok.SuruKayit = K;\n})(typeof window !== 'undefined' ? window : this, function () {\n  'use strict';\n\n  // Köy sürüsü: hayvanlar farklı ailelere aittir, tek çoban hepsini otlatır.\n  // kanal: push = mobil uygulama bildirimi, SMS = uygulaması olmayan mal sahibi (rapor Bölüm 7.2)\n  var SAHIPLER = [\n    { kod: 'MS-01', ad: 'Hasan K.', kanal: 'push', pay: 9 },\n    { kod: 'MS-02', ad: 'Ayşe D.', kanal: 'push', pay: 6 },\n    { kod: 'MS-03', ad: 'Mehmet Y.', kanal: 'SMS', pay: 8 },\n    { kod: 'MS-04', ad: 'Fatma Ö.', kanal: 'push', pay: 4 },\n    { kod: 'MS-05', ad: 'Ali Ç.', kanal: 'push', pay: 7 },\n    { kod: 'MS-06', ad: 'Zeynep A.', kanal: 'push', pay: 3 },\n    { kod: 'MS-07', ad: 'Hüseyin T.', kanal: 'SMS', pay: 10 },\n    { kod: 'MS-08', ad: 'Emine B.', kanal: 'push', pay: 5 },\n    { kod: 'MS-09', ad: 'İbrahim S.', kanal: 'push', pay: 6 },\n    { kod: 'MS-10', ad: 'Hatice G.', kanal: 'SMS', pay: 4 },\n    { kod: 'MS-11', ad: 'Mustafa E.', kanal: 'push', pay: 8 },\n    { kod: 'MS-12', ad: 'Elif K.', kanal: 'push', pay: 3 },\n    { kod: 'MS-13', ad: 'Osman Y.', kanal: 'SMS', pay: 5 },\n    { kod: 'MS-14', ad: 'Cemile A.', kanal: 'push', pay: 4 }\n  ];\n  var COBAN = { kod: 'CB-01', ad: 'Veli A.', kanal: 'push' };\n  var IL_KODU = '25';                         // Erzurum (gösterimdeki yayla Oltu civarında)\n\n  function rastgele(tohum) {                  // mulberry32: aynı tohum her yerde aynı kaydı verir\n    var a = tohum >>> 0;\n    return function () {\n      a = (a + 0x6D2B79F5) >>> 0;\n      var t = a;\n      t = Math.imul(t ^ (t >>> 15), t | 1);\n      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);\n      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n    };\n  }\n\n  // N hayvanlık kaydı kurar. Etiket numarası 1000 + sıra; sahiplik karışıktır (köy sürüsü).\n  function kur(N, tohum) {\n    N = N || 500;\n    var r = rastgele(tohum || 2026);\n    var sira = [];\n    for (var i = 0; i < N; i++) sira.push(i);\n    for (i = N - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), g = sira[i]; sira[i] = sira[j]; sira[j] = g; }\n    var payTop = SAHIPLER.reduce(function (s, o) { return s + o.pay; }, 0);\n    var sayilar = SAHIPLER.map(function (o) { return Math.floor(N * o.pay / payTop); });\n    var kalan = N - sayilar.reduce(function (s, v) { return s + v; }, 0);\n    for (i = 0; kalan > 0; i = (i + 1) % sayilar.length, kalan--) sayilar[i]++;\n    var hayvanlar = new Array(N), kupeler = {}, k = 0;\n    SAHIPLER.forEach(function (o, si) {\n      for (var n = 0; n < sayilar[si]; n++, k++) {\n        var idx = sira[k], kupe;\n        do { kupe = 'TR' + IL_KODU + String(10000000 + Math.floor(r() * 89999999)); } while (kupeler[kupe]);\n        kupeler[kupe] = true;\n        hayvanlar[idx] = { etiket: 1000 + idx, kupe: kupe, tur: r() < 0.16 ? 'keçi' : 'koyun', sahip: o.kod };\n      }\n    });\n    var sahipler = {};\n    SAHIPLER.forEach(function (o, si) { sahipler[o.kod] = { kod: o.kod, ad: o.ad, kanal: o.kanal, hayvan: sayilar[si] }; });\n    return { hayvanlar: hayvanlar, sahipler: sahipler, coban: COBAN, N: N };\n  }\n\n  function hayvan(kayit, etiket) { return kayit.hayvanlar[etiket - 1000] || null; }\n  function sahibi(kayit, etiket) { var h = hayvan(kayit, etiket); return h ? kayit.sahipler[h.sahip] : null; }\n\n  var OLAY = {\n    kopma: 'sürüden ayrıldı', hareketsiz: 'uzun süredir hareketsiz',\n    yasak: 'sürüsüyle yasak alana (ekili tarla) girdi', eksik: 'akşam sayımında ağıla dönmedi'\n  };\n  function sizin(tur) { return tur === 'keçi' ? 'keçiniz' : 'koyununuz'; }\n  function buyuk(s) { return s.charAt(0).toLocaleUpperCase('tr-TR') + s.slice(1); }\n  function konumYazi(o) { return o.lat ? ' Son konum ' + (+o.lat).toFixed(4) + ', ' + (+o.lon).toFixed(4) + '.' : ''; }\n\n  // Bir acil olayı bildirimlere çevirir.\n  // olay = { tur, etiketler: [1029, ...], lat?, lon? }  ->  [{ alici, kod, kisi, kanal, tur, etiketler, kupe, mesaj }]\n  // Kurallar:\n  //  - Çoban her acil olayı push ile alır (sahada ayrıca LoRa ile yerel alarm alır, ⑧).\n  //  - Mal sahibi yalnızca kendi hayvanının olayını, kendi seçtiği kanaldan alır.\n  //  - Akşam sayımındaki eksikler mal sahibine tek tek değil, sahip başına tek mesajda gider.\n  //  - Yasak alan sürü olayıdır (önder tasmasından gelir); tek bir mal sahibine ait değildir, yalnızca çobana gider.\n  function bildirimler(kayit, olay) {\n    var c = [], et = (olay.etiketler || []).filter(function (e) { return hayvan(kayit, e); });\n    if (!et.length) return c;\n    var cb = kayit.coban, tur = olay.tur;\n    if (tur === 'eksik') {\n      c.push({ alici: 'Çoban', kod: cb.kod, kisi: cb.ad, kanal: cb.kanal, tur: tur, etiketler: et, kupe: et.length + ' hayvan',\n               mesaj: 'Akşam sayımında ' + et.length + ' hayvan eksik: ' + et.slice(0, 8).join(', ') + (et.length > 8 ? ' …' : '') + '.' });\n      var grup = {};\n      et.forEach(function (e) { var h = hayvan(kayit, e); (grup[h.sahip] = grup[h.sahip] || []).push(h); });\n      Object.keys(grup).sort().forEach(function (kod) {\n        var o = kayit.sahipler[kod], hs = grup[kod];\n        c.push({ alici: 'Mal sahibi', kod: kod, kisi: o.ad, kanal: o.kanal, tur: tur, etiketler: hs.map(function (h) { return h.etiket; }),\n                 kupe: hs.map(function (h) { return h.kupe; }).join(' '),\n                 mesaj: 'Akşam sayımında ' + (hs.length === 1 ? sizin(hs[0].tur) + ' ' + hs[0].etiket + ' (' + hs[0].kupe + ')' : hs.length + ' hayvanınız (' + hs.map(function (h) { return h.etiket; }).join(', ') + ')') +\n                        ' ağıla dönmedi. Çoban ' + cb.ad + ' bilgilendirildi.' });\n      });\n      return c;\n    }\n    var h = hayvan(kayit, et[0]), o = kayit.sahipler[h.sahip];\n    c.push({ alici: 'Çoban', kod: cb.kod, kisi: cb.ad, kanal: cb.kanal, tur: tur, etiketler: [h.etiket], kupe: h.kupe,\n             mesaj: (tur === 'yasak' ? 'Sürü yasak alana (ekili tarla) girdi; önder ' + h.tur + ' ' + h.etiket + '.'\n                                      : buyuk(h.tur) + ' ' + h.etiket + ' (' + o.ad + ') ' + OLAY[tur] + '.') + konumYazi(olay) });\n    if (tur !== 'yasak') {\n      c.push({ alici: 'Mal sahibi', kod: o.kod, kisi: o.ad, kanal: o.kanal, tur: tur, etiketler: [h.etiket], kupe: h.kupe,\n               mesaj: buyuk(sizin(h.tur)) + ' ' + h.etiket + ' (' + h.kupe + ') ' + OLAY[tur] + '. Çoban ' + cb.ad + ' bilgilendirildi.' });\n    }\n    return c;\n  }\n\n  return { kur: kur, hayvan: hayvan, sahibi: sahibi, bildirimler: bildirimler, SAHIPLER: SAHIPLER, COBAN: COBAN, OLAY: OLAY };\n});\n\ncontext.set('K', module.exports);\ncontext.set('kayit', module.exports.kur(500));",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 240,
+    "wires": [
+      [
+        "l_yaz_out"
+      ]
+    ]
+  },
+  {
+    "id": "l_yaz_out",
+    "type": "link out",
+    "z": "bulut_sekme",
+    "name": "InfluxDB yazıcıya",
+    "mode": "link",
+    "links": [
+      "l_yaz_in"
+    ],
+    "x": 655,
+    "y": 120,
+    "wires": []
+  }
+]

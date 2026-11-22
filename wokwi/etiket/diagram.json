@@ -1,0 +1,337 @@
+{
+  "version": 1,
+  "author": "Ahmet ATAGÜL",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-attiny85",
+      "id": "tiny",
+      "top": 20,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -40,
+      "left": 120,
+      "rotate": 0,
+      "attrs": {
+        "value": "100"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": -110,
+      "left": 230,
+      "attrs": {
+        "color": "red",
+        "label": "IR LED"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 10,
+      "left": 120,
+      "rotate": 0,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": -60,
+      "left": 300,
+      "attrs": {
+        "color": "green",
+        "label": "Durum"
+      }
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic1",
+      "top": 140,
+      "left": 140,
+      "attrs": {
+        "channelNames": "IR,Durum,Reed",
+        "filename": "etiket-nec"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 95,
+      "left": -110,
+      "attrs": {
+        "color": "black",
+        "label": "Kapi miknatisi (reed)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_baslik",
+      "top": -190,
+      "left": -160,
+      "attrs": {
+        "text": "LED KİMLİK ETİKETİ · uç katman (hayvanın kulağında)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_baslik2",
+      "top": -163.2,
+      "left": -163.2,
+      "attrs": {
+        "text": "Kapıdan geçerken numarasını kızılötesi ışıkla 3 kez yayar, sonra uyur"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_cip1",
+      "top": 15,
+      "left": -230,
+      "attrs": {
+        "text": "ATtiny85: etiketin beyni"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_cip2",
+      "top": 33,
+      "left": -230,
+      "attrs": {
+        "text": "uyur, kapıda uyanır"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ir1",
+      "top": -100,
+      "left": 270,
+      "attrs": {
+        "text": "Numarayı ışıkla yayar"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ir2",
+      "top": -82,
+      "left": 270,
+      "attrs": {
+        "text": "(gerçekte görünmez kızılötesi)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_durum1",
+      "top": -50,
+      "left": 340,
+      "attrs": {
+        "text": "Yayın sırasında yanar"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_durum2",
+      "top": -32,
+      "left": 340,
+      "attrs": {
+        "text": "(yalnız gösterim için)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_direnc",
+      "top": 40,
+      "left": 150,
+      "attrs": {
+        "text": "Dirençler: LED akımını sınırlar"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_reed1",
+      "top": 200,
+      "left": -270,
+      "attrs": {
+        "text": "Reed anahtarı: kapıdaki mıknatıs"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_reed2",
+      "top": 218,
+      "left": -270,
+      "attrs": {
+        "text": "yaklaşınca kapanır = hayvan kapıda"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_lojik1",
+      "top": 260,
+      "left": 140,
+      "attrs": {
+        "text": "Lojik analizör: ışık darbelerini kaydeder"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_lojik2",
+      "top": 278,
+      "left": 140,
+      "attrs": {
+        "text": "(ölçü aleti, gerçek etikette yok)"
+      }
+    },
+    {
+      "type": "wokwi-vcc",
+      "id": "pil_arti",
+      "top": -40,
+      "left": -60,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-gnd",
+      "id": "pil_eksi",
+      "top": 75,
+      "left": 55,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_pil1",
+      "top": -112,
+      "left": -330,
+      "attrs": {
+        "text": "Güç: CR2032 düğme pil · 3 V · ≈220 mAh"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_pil2",
+      "top": -94,
+      "left": -330,
+      "attrs": {
+        "text": "(+) çipin VCC ucuna, (−) GND ucuna bağlı"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_pil3",
+      "top": -76,
+      "left": -330,
+      "attrs": {
+        "text": "Etiket uykuda olduğu için pil yıllarca dayanır"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_pilp",
+      "top": -40,
+      "left": -35,
+      "attrs": {
+        "text": "pil (+)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_pilm",
+      "top": 92,
+      "left": 80,
+      "attrs": {
+        "text": "pil (−)"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "tiny:PB0",
+      "r1:1",
+      "orange",
+      []
+    ],
+    [
+      "r1:2",
+      "led1:A",
+      "orange",
+      []
+    ],
+    [
+      "led1:C",
+      "tiny:GND",
+      "black",
+      []
+    ],
+    [
+      "tiny:PB1",
+      "r2:1",
+      "green",
+      []
+    ],
+    [
+      "r2:2",
+      "led2:A",
+      "green",
+      []
+    ],
+    [
+      "led2:C",
+      "tiny:GND",
+      "black",
+      []
+    ],
+    [
+      "logic1:D0",
+      "tiny:PB0",
+      "orange",
+      []
+    ],
+    [
+      "logic1:D1",
+      "tiny:PB1",
+      "green",
+      []
+    ],
+    [
+      "logic1:GND",
+      "tiny:GND",
+      "black",
+      []
+    ],
+    [
+      "btn1:2.r",
+      "tiny:PB2",
+      "violet",
+      []
+    ],
+    [
+      "btn1:1.r",
+      "tiny:GND",
+      "black",
+      []
+    ],
+    [
+      "logic1:D2",
+      "tiny:PB2",
+      "violet",
+      []
+    ],
+    [
+      "pil_arti:VCC",
+      "tiny:VCC",
+      "red",
+      []
+    ],
+    [
+      "pil_eksi:GND",
+      "tiny:GND",
+      "black",
+      []
+    ]
+  ],
+  "dependencies": {}
+}

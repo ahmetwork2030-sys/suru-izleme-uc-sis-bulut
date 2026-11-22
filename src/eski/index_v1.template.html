@@ -1,0 +1,219 @@
+<title>Sürü İzleme Simülatörü</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Düzen: üstte kontrol şeridi; solda arazi haritası, sağda canlı ölçüm paneli; altta olay akışı ve 30 günlük deney tablosu */
+:root {
+  --bg: #f3f5f1; --surface: #ffffff; --surface-2: #eef1ea; --line: #d7ddd2; --fg: #1d2620; --muted: #5d6a60;
+  --accent: #1f6f5c; --accent-soft: #dcefe8;
+  --k: #55677a; --s: #a8641a; --u: #1f6f5c; --alarm: #c2410c; --ok: #2f7d32;
+  --map-grass: #e3ebd5; --map-grass-2: #d6e2c4; --map-forest: #9db58c; --map-line: #9aa88f; --map-text: #3d4a3f;
+  --zone: rgba(31,111,92,0.10); --zone-line: rgba(31,111,92,0.45); --yasak: #c2410c;
+  --dot-led: #6f7a70; --dot-lora: #2563a8; --dot-lead: #c26b0c; --coban: #1d2620;
+  --f-text: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121714; --surface: #1a211c; --surface-2: #212a24; --line: #2f3a32; --fg: #e4ebe5; --muted: #9aa89d;
+    --accent: #5fc3a6; --accent-soft: #1d3a32;
+    --k: #9fb2c6; --s: #e3a35a; --u: #5fc3a6; --alarm: #f08a5d; --ok: #7cc77f;
+    --map-grass: #1f2a21; --map-grass-2: #243026; --map-forest: #2c3f2c; --map-line: #4b5a4d; --map-text: #c3cfc5;
+    --zone: rgba(95,195,166,0.10); --zone-line: rgba(95,195,166,0.5); --yasak: #f08a5d;
+    --dot-led: #a6b2a8; --dot-lora: #6aa8ec; --dot-lead: #f0a347; --coban: #f4f7f4;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121714; --surface: #1a211c; --surface-2: #212a24; --line: #2f3a32; --fg: #e4ebe5; --muted: #9aa89d;
+  --accent: #5fc3a6; --accent-soft: #1d3a32;
+  --k: #9fb2c6; --s: #e3a35a; --u: #5fc3a6; --alarm: #f08a5d; --ok: #7cc77f;
+  --map-grass: #1f2a21; --map-grass-2: #243026; --map-forest: #2c3f2c; --map-line: #4b5a4d; --map-text: #c3cfc5;
+  --zone: rgba(95,195,166,0.10); --zone-line: rgba(95,195,166,0.5); --yasak: #f08a5d;
+  --dot-led: #a6b2a8; --dot-lora: #6aa8ec; --dot-lead: #f0a347; --coban: #f4f7f4;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-text); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-block: 20px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; }
+h1, h2, h3 { font-family: var(--f-head); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.1rem; font-weight: 600; }
+.sub { color: var(--muted); max-width: 70ch; margin: 4px 0 0; }
+.head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--fg); padding: 7px 11px; font: 500 13px var(--f-text); cursor: pointer; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.btn { border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); padding: 7px 12px; border-radius: 8px; font: 500 13px var(--f-text); cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn:focus-visible, .seg button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+select { font: 500 13px var(--f-text); padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.ctl-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.profile-note { color: var(--muted); font-size: 13px; }
+.main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+.mapbox canvas { width: 100%; height: auto; aspect-ratio: 8 / 5; display: block; border-radius: 6px; max-width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.sw.sq { border-radius: 2px; }
+.clock { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.clock .time { font-family: var(--f-mono); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
+.chip.on { color: var(--ok); border-color: var(--ok); }
+.chip.off { color: var(--alarm); border-color: var(--alarm); }
+.strats { display: grid; gap: 10px; margin-top: 12px; }
+.strat { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; }
+.strat h3 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.strat h3 .dot { width: 9px; height: 9px; border-radius: 50%; }
+.kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.kv div { display: grid; gap: 1px; }
+.kv .k { font-size: 11px; color: var(--muted); }
+.kv .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 14px; }
+.bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.bar i { display: block; height: 100%; }
+.log { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 8px; max-height: 340px; overflow-y: auto; margin-top: 8px; align-content: start; }
+.ev { display: grid; gap: 4px; padding: 8px; border-radius: 8px; background: var(--surface-2); }
+.ev .t { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.ev .txt { font-size: 13px; }
+.ev .dl { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-family: var(--f-mono); font-size: 11.5px; padding: 2px 7px; border-radius: 5px; border: 1px solid var(--line); background: var(--surface); }
+.tag.K { color: var(--k); } .tag.S { color: var(--s); } .tag.U { color: var(--u); }
+.tag.wait { color: var(--alarm); }
+.tablewrap { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; }
+td.num { font-family: var(--f-mono); }
+tr.U td { background: var(--accent-soft); }
+.note { color: var(--muted); font-size: 12.5px; margin-top: 8px; max-width: 90ch; }
+.empty { color: var(--muted); font-size: 13px; padding: 8px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+.gate-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.gate-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.gate-links a.btn { text-decoration: none; display: inline-block; }
+.gate-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 14px; margin-top: 10px; align-items: start; }
+@media (max-width: 1000px) { .gate-grid { grid-template-columns: minmax(0, 1fr); } }
+.corridor { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)) auto; gap: 6px; align-items: stretch; }
+.corridor .end { align-self: center; font-size: 12px; color: var(--muted); writing-mode: vertical-rl; transform: rotate(180deg); }
+.corridor .st { border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; background: var(--surface-2); display: grid; gap: 2px; text-align: center; transition: background .15s, border-color .15s; }
+.corridor .st b { font-size: 12.5px; font-weight: 600; }
+.corridor .st small { font-size: 11.5px; color: var(--muted); font-family: var(--f-mono); overflow-wrap: anywhere; }
+.corridor .st.on { background: var(--accent-soft); border-color: var(--accent); }
+.corridor .dir { grid-column: 1 / -1; text-align: center; font-family: var(--f-mono); font-size: 13px; min-height: 1.4em; color: var(--accent); }
+.gate-explain { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+.lcd { background: #8fb339; color: #1b2a0a; border: 6px solid #24452a; border-radius: 6px; font-family: var(--f-mono); font-size: 15px; line-height: 1.35; padding: 6px 8px; display: grid; white-space: pre; letter-spacing: 0.04em; }
+.lamps { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.lamp { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid var(--line); background: var(--surface-2); margin-left: 6px; }
+.lamp.g.on { background: #2fb344; border-color: #2fb344; }
+.lamp.r.on { background: #e03a2e; border-color: #e03a2e; }
+.gstats { font-size: 12.5px; color: var(--muted); margin-top: 8px; display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+.serial { background: #10140f; color: #cfe3c8; border-radius: 8px; padding: 8px 10px; font-family: var(--f-mono); font-size: 11.5px; line-height: 1.5; max-height: 220px; overflow-y: auto; overflow-wrap: anywhere; }
+.serial .s { color: #f0b46a; }
+.serial .k { color: #7fb7e6; }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div>
+      <h1>Sürü İzleme Simülatörü</h1>
+      <p class="sub">500 hayvanlık bir sürü, ağıldaki sabit sis düğümü ve çobanın cebindeki mobil sis düğümü. Aynı gün üç yöntemle izlenir: klasik bulut merkezli yapı, sis + anlık iletim ve sis + Uyuyan Bulut.</p>
+    </div>
+  </header>
+
+  <section class="controls" aria-label="Simülasyon ayarları">
+    <span class="ctl-label">Bağlantı profili</span>
+    <div class="seg" role="group" aria-label="Bağlantı profili" id="profiles"></div>
+    <span class="ctl-label">Hız</span>
+    <select id="speed" aria-label="Simülasyon hızı">
+      <option value="0.1">En yavaş · 1 saat ≈ 10 sn</option>
+      <option value="0.25">Çok yavaş · 1 saat ≈ 4 sn</option>
+      <option value="0.5">Yavaş · 1 saat ≈ 2 sn</option>
+      <option value="1" selected>Normal · 1 saat ≈ 1 sn</option>
+      <option value="3">Hızlı · 1 gün ≈ 8 sn</option>
+      <option value="10">Çok hızlı · 1 gün ≈ 2 sn</option>
+    </select>
+    <button class="btn primary" id="play" type="button">Duraklat</button>
+    <button class="btn" id="day" type="button">Bir gün ileri</button>
+    <button class="btn" id="reset" type="button">Yeni senaryo</button>
+    <span class="profile-note" id="pnote"></span>
+  </section>
+
+  <div class="main">
+    <div class="card mapbox">
+      <canvas id="map" width="1600" height="1000" aria-label="Arazi haritası: ağıl, meralar, yasak alan, sürü ve çoban"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--dot-lead)"></i>Önder hayvan tasması (GPS)</span>
+        <span><i class="sw" style="background:var(--dot-lora)"></i>LoRa etiketi</span>
+        <span><i class="sw" style="background:var(--dot-led)"></i>LED kimlik etiketi</span>
+        <span><i class="sw" style="background:var(--alarm)"></i>Kopan ya da hareketsiz hayvan</span>
+        <span><i class="sw sq" style="background:var(--yasak)"></i>Yasak alan (ekili tarla)</span>
+        <span><i class="sw" style="border:2px dashed var(--zone-line)"></i>LoRa menzili</span>
+      </div>
+    </div>
+
+    <aside class="card" aria-label="Canlı ölçümler">
+      <div class="clock"><h2 id="dayl">Gün 1</h2><span class="time" id="time">00:00</span></div>
+      <div class="chips" id="chips"></div>
+      <div class="strats" id="strats"></div>
+    </aside>
+  </div>
+
+  <section class="card" aria-label="Ağıl kapısı">
+    <div class="gate-head">
+      <h2>Ağıl kapısı · Wokwi devrelerinin simülasyondaki karşılığı</h2>
+      <div class="gate-links">
+        <button class="btn primary" id="gotoEve" type="button">Akşam dönüşünü izle</button>
+        <a class="btn" href="https://wokwi.com/projects/481291721449614337" target="_blank" rel="noopener">Okuyucu devresi (Wokwi) ↗</a>
+        <a class="btn" href="https://wokwi.com/projects/481291970159331329" target="_blank" rel="noopener">Etiket devresi (Wokwi) ↗</a>
+      </div>
+    </div>
+    <p class="gate-explain">Wokwi'de tek bir etiketle elle denenen kapı, burada 500 hayvanın hepsi için çalışır. Hayvan koridora girince kapıdaki mıknatıs LED etiketini uyandırır, etiket numarasını kızılötesi ışıkla yayar; okuyucu yönü iki ışık bariyerinin sırasından bulur, sayar ve kaydı Wokwi'dekiyle aynı biçimde yerel MQTT'ye yazar. Sabah 07:00–07:30 arası çıkış, akşam yaklaşık 19:20–20:00 arası giriş görülür; her önder hayvanın grubu kapıdan topluca geçer.</p>
+    <div class="gate-grid">
+      <div>
+        <div class="corridor" aria-label="Kapı koridoru">
+          <span class="end">Mera</span>
+          <div class="st" id="g-dis"><b>Dış bariyer</b><small>ışık bariyeri</small></div>
+          <div class="st" id="g-ir"><b>Kızılötesi alıcı</b><small id="g-irtxt">etiket bekleniyor</small></div>
+          <div class="st" id="g-ic"><b>İç bariyer</b><small>ışık bariyeri</small></div>
+          <span class="end">Ağıl</span>
+          <div class="dir" id="g-dir"></div>
+        </div>
+      </div>
+      <div>
+        <div class="lcd" id="g-lcd" aria-label="Okuyucunun LCD ekranı"><span id="g-l1">Icerde 500/500  </span><span id="g-l2">Kapi hazir      </span></div>
+        <div class="lamps"><span class="lamp g" id="g-led-g"></span>Kayıt <span class="lamp r" id="g-led-r"></span>Uyarı</div>
+        <div class="gstats" id="g-stats"></div>
+      </div>
+      <div class="serial" id="g-serial" aria-label="Okuyucunun MQTT iletileri"></div>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Olay akışı">
+    <h2>Olaylar ve alarmın çobana ulaştığı an</h2>
+    <div class="log" id="log"></div>
+  </section>
+  <section class="card" aria-label="Toplu deney sonuçları">
+    <h2>30 günlük toplu deney</h2>
+    <div class="tablewrap"><table id="batch"></table></div>
+    <p class="note" id="batchnote"></p>
+  </section>
+</div>
+
+<script>
+/*__ENGINE__*/
+</script>
+<script>
+window.TOPLU_DENEY = /*__OZET__*/;
+</script>
+<script>
+/*__APP__*/
+</script>

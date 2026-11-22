@@ -1,0 +1,568 @@
+{
+  "version": 1,
+  "author": "Ahmet ATAGÜL",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ir-receiver",
+      "id": "ir1",
+      "top": 215,
+      "left": 165,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -10,
+      "left": 150,
+      "attrs": {
+        "pins": "i2c"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 30,
+      "left": -165,
+      "attrs": {
+        "color": "green",
+        "label": "Kayit"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 110,
+      "left": -175,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": 30,
+      "left": -215,
+      "attrs": {
+        "color": "red",
+        "label": "Uyari"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 110,
+      "left": -225,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": 10,
+      "left": -115,
+      "attrs": {
+        "volume": "0.3"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 250,
+      "left": -110,
+      "attrs": {
+        "color": "red",
+        "label": "Sayimi kapat"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 340,
+      "left": -110,
+      "attrs": {
+        "color": "blue",
+        "label": "Internet ac/kapat"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_baslik",
+      "top": -120,
+      "left": -300,
+      "attrs": {
+        "text": "AĞIL KAPISI OKUYUCU · sabit sis (ağıl girişinde)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_baslik2",
+      "top": -98,
+      "left": -300,
+      "attrs": {
+        "text": "Etiketi okur, yönü bariyerlerden bulur, sayar ve kaydı yerel MQTT sunucusuna yollar"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_lcd",
+      "top": -40,
+      "left": 150,
+      "attrs": {
+        "text": "LCD: ağıldaki hayvan sayısı, son geçiş, uyarılar"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_yesil",
+      "top": -60,
+      "left": -330,
+      "attrs": {
+        "text": "Yeşil LED (Kayit): geçiş kaydedildi"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_kirmizi",
+      "top": -42,
+      "left": -330,
+      "attrs": {
+        "text": "Kırmızı LED (Uyari): eksik hayvan, tanımsız etiket"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_buzzer",
+      "top": -24,
+      "left": -330,
+      "attrs": {
+        "text": "Buzzer: kısa bip = kayıt, uzun ses = eksik"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_dis",
+      "top": 140,
+      "left": 160,
+      "attrs": {
+        "color": "yellow",
+        "label": "Dış bariyer"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_ic",
+      "top": 315,
+      "left": 160,
+      "attrs": {
+        "color": "yellow",
+        "label": "İç bariyer"
+      }
+    },
+    {
+      "type": "wokwi-vcc",
+      "id": "guc_arti",
+      "top": 185,
+      "left": -55,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-gnd",
+      "id": "guc_eksi",
+      "top": 215,
+      "left": -25,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_esp1",
+      "top": -80,
+      "left": -10,
+      "attrs": {
+        "text": "ESP32: okuyucunun beyni"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_esp2",
+      "top": -62,
+      "left": -10,
+      "attrs": {
+        "text": "sayar, yönü bulur, internet yokken bekletir"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_guc1",
+      "top": 165,
+      "left": -430,
+      "attrs": {
+        "text": "GÜÇ · ağıldaki enerji birimi"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_guc2",
+      "top": 183,
+      "left": -430,
+      "attrs": {
+        "text": "güneş paneli + akü → 5 V"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_sayim1",
+      "top": 245,
+      "left": -430,
+      "attrs": {
+        "text": "KIRMIZI DÜĞME · Sayımı kapat"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_sayim2",
+      "top": 263,
+      "left": -430,
+      "attrs": {
+        "text": "Akşam hayvanlar dönünce basılır"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_sayim3",
+      "top": 281,
+      "left": -430,
+      "attrs": {
+        "text": "İçeride olmayanları listeler"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_sayim4",
+      "top": 299,
+      "left": -430,
+      "attrs": {
+        "text": "Eksik varsa kırmızı LED + uzun ses"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_sayim5",
+      "top": 317,
+      "left": -430,
+      "attrs": {
+        "text": "Sonuç MQTT ile sis düğümüne gider"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_net1",
+      "top": 345,
+      "left": -430,
+      "attrs": {
+        "text": "MAVİ DÜĞME · İnternet aç/kapat"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_net2",
+      "top": 363,
+      "left": -430,
+      "attrs": {
+        "text": "Yayladaki bağlantı kopmasını taklit eder"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_net3",
+      "top": 381,
+      "left": -430,
+      "attrs": {
+        "text": "Kopukken kayıtlar sıra no ile bekler"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_net4",
+      "top": 399,
+      "left": -430,
+      "attrs": {
+        "text": "Tekrar basınca bekleyenler sırayla gider"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_dis1",
+      "top": 135,
+      "left": 245,
+      "attrs": {
+        "text": "SARI DÜĞME · Dış ışık bariyeri (mera tarafı)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_dis2",
+      "top": 153,
+      "left": 245,
+      "attrs": {
+        "text": "Gerçekte kızılötesi ışık bariyeri;"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_dis3",
+      "top": 171,
+      "left": 245,
+      "attrs": {
+        "text": "basmak = hayvanın gövdesi ışını kesti"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ir1",
+      "top": 215,
+      "left": 245,
+      "attrs": {
+        "text": "KIZILÖTESİ ALICI · etiketin ışığını okur"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ir2",
+      "top": 233,
+      "left": 245,
+      "attrs": {
+        "text": "Tıkla, açılan pencereye adres + komut gir,"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ir3",
+      "top": 251,
+      "left": 245,
+      "attrs": {
+        "text": "Send = etiket numarasını yaydı"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ir4",
+      "top": 269,
+      "left": 245,
+      "attrs": {
+        "text": "(1318 → adres 5, komut 38)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ic1",
+      "top": 300,
+      "left": 245,
+      "attrs": {
+        "text": "SARI DÜĞME · İç ışık bariyeri (ağıl tarafı)"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ic2",
+      "top": 318,
+      "left": 245,
+      "attrs": {
+        "text": "Dış → iç kesilirse GİRİŞ, iç → dış ÇIKIŞ"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ic3",
+      "top": 336,
+      "left": 245,
+      "attrs": {
+        "text": "Sıra: Dış bariyer → IR alıcıya kod → İç bariyer"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "n_ic4",
+      "top": 354,
+      "left": 245,
+      "attrs": {
+        "text": "Etiket okunmazsa: \"Etiketsiz geçiş!\" uyarısı"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "ir1:GND",
+      "esp:GND.3",
+      "black",
+      []
+    ],
+    [
+      "ir1:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "ir1:DAT",
+      "esp:15",
+      "orange",
+      []
+    ],
+    [
+      "lcd1:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "lcd1:VCC",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "lcd1:SDA",
+      "esp:21",
+      "green",
+      []
+    ],
+    [
+      "lcd1:SCL",
+      "esp:22",
+      "blue",
+      []
+    ],
+    [
+      "esp:26",
+      "led1:A",
+      "green",
+      []
+    ],
+    [
+      "led1:C",
+      "r1:1",
+      "black",
+      []
+    ],
+    [
+      "r1:2",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "esp:27",
+      "led2:A",
+      "red",
+      []
+    ],
+    [
+      "led2:C",
+      "r2:1",
+      "black",
+      []
+    ],
+    [
+      "r2:2",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "bz1:2",
+      "esp:25",
+      "purple",
+      []
+    ],
+    [
+      "bz1:1",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "btn1:1.r",
+      "esp:13",
+      "gray",
+      []
+    ],
+    [
+      "btn1:2.r",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "btn2:1.r",
+      "esp:33",
+      "gray",
+      []
+    ],
+    [
+      "btn2:2.r",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "btn_dis:1.l",
+      "esp:16",
+      "yellow",
+      []
+    ],
+    [
+      "btn_dis:2.l",
+      "esp:GND.3",
+      "black",
+      []
+    ],
+    [
+      "btn_ic:1.l",
+      "esp:4",
+      "yellow",
+      []
+    ],
+    [
+      "btn_ic:2.l",
+      "esp:GND.3",
+      "black",
+      []
+    ],
+    [
+      "guc_arti:VCC",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "guc_eksi:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ]
+  ],
+  "dependencies": {}
+}

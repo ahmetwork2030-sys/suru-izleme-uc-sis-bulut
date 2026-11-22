@@ -1,0 +1,504 @@
+{
+ "gun": 30,
+ "tohumlar": [
+  11,
+  23,
+  37,
+  41,
+  59
+ ],
+ "sonuc": {
+  "P1|K": {
+   "profil": "P1",
+   "strateji": "K",
+   "mesajGun": 3879.1066666666666,
+   "kbGun": 947.0475260416667,
+   "depoMBYil": 141.58739333333332,
+   "modemDkGun": 1440,
+   "olay": 225,
+   "kacanOran": 0,
+   "medyan": 9,
+   "p95": 76.19999999999993,
+   "ilk15dk": 0.5466666666666666,
+   "yanlis": 0,
+   "alarm": 291,
+   "tur": {
+    "yasak": {
+     "n": 40,
+     "medyan": 5.5,
+     "p95": 13.049999999999997,
+     "kacan": 0
+    },
+    "eksik": {
+     "n": 83,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 51,
+     "medyan": 53,
+     "p95": 523.5,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 51,
+     "medyan": 65,
+     "p95": 80,
+     "kacan": 0
+    }
+   }
+  },
+  "P1|S": {
+   "profil": "P1",
+   "strateji": "S",
+   "mesajGun": 3881.0800000000004,
+   "kbGun": 947.7220052083333,
+   "depoMBYil": 141.73144666666667,
+   "modemDkGun": 1440,
+   "olay": 225,
+   "kacanOran": 0,
+   "medyan": 9,
+   "p95": 70,
+   "ilk15dk": 0.5466666666666666,
+   "yanlis": 0,
+   "alarm": 464,
+   "tur": {
+    "yasak": {
+     "n": 40,
+     "medyan": 5.5,
+     "p95": 13.049999999999997,
+     "kacan": 0
+    },
+    "eksik": {
+     "n": 83,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 51,
+     "medyan": 48,
+     "p95": 74,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 51,
+     "medyan": 64,
+     "p95": 71.5,
+     "kacan": 0
+    }
+   }
+  },
+  "P1|U": {
+   "profil": "P1",
+   "strateji": "U",
+   "mesajGun": 26.973333333333336,
+   "kbGun": 19.050455729166668,
+   "depoMBYil": 14.014053333333333,
+   "modemDkGun": 24.926666666666666,
+   "olay": 225,
+   "kacanOran": 0,
+   "medyan": 9,
+   "p95": 70,
+   "ilk15dk": 0.5466666666666666,
+   "yanlis": 0,
+   "alarm": 464,
+   "tur": {
+    "yasak": {
+     "n": 40,
+     "medyan": 5.5,
+     "p95": 13.049999999999997,
+     "kacan": 0
+    },
+    "eksik": {
+     "n": 83,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 51,
+     "medyan": 48,
+     "p95": 74,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 51,
+     "medyan": 64,
+     "p95": 71.5,
+     "kacan": 0
+    }
+   }
+  },
+  "P2|K": {
+   "profil": "P2",
+   "strateji": "K",
+   "mesajGun": 3879.2333333333327,
+   "kbGun": 947.0784505208334,
+   "depoMBYil": 141.59201666666667,
+   "modemDkGun": 1363.5066666666667,
+   "olay": 191,
+   "kacanOran": 0,
+   "medyan": 285,
+   "p95": 535,
+   "ilk15dk": 0.3612565445026178,
+   "yanlis": 0,
+   "alarm": 249,
+   "tur": {
+    "eksik": {
+     "n": 71,
+     "medyan": 0,
+     "p95": 7.5,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 40,
+     "medyan": 414.5,
+     "p95": 589.05,
+     "kacan": 0
+    },
+    "yasak": {
+     "n": 36,
+     "medyan": 304,
+     "p95": 414.75,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 44,
+     "medyan": 429,
+     "p95": 535.7,
+     "kacan": 0
+    }
+   }
+  },
+  "P2|S": {
+   "profil": "P2",
+   "strateji": "S",
+   "mesajGun": 3880.913333333334,
+   "kbGun": 947.6526692708334,
+   "depoMBYil": 141.71465666666668,
+   "modemDkGun": 1363.5066666666667,
+   "olay": 191,
+   "kacanOran": 0,
+   "medyan": 11,
+   "p95": 69,
+   "ilk15dk": 0.5549738219895288,
+   "yanlis": 0,
+   "alarm": 395,
+   "tur": {
+    "eksik": {
+     "n": 71,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 40,
+     "medyan": 63,
+     "p95": 71.05,
+     "kacan": 0
+    },
+    "yasak": {
+     "n": 36,
+     "medyan": 7.5,
+     "p95": 14,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 44,
+     "medyan": 48,
+     "p95": 69.55000000000001,
+     "kacan": 0
+    }
+   }
+  },
+  "P2|U": {
+   "profil": "P2",
+   "strateji": "U",
+   "mesajGun": 25.326666666666664,
+   "kbGun": 18.619791666666664,
+   "depoMBYil": 13.99264,
+   "modemDkGun": 24.273333333333333,
+   "olay": 191,
+   "kacanOran": 0,
+   "medyan": 11,
+   "p95": 69,
+   "ilk15dk": 0.5549738219895288,
+   "yanlis": 0,
+   "alarm": 395,
+   "tur": {
+    "eksik": {
+     "n": 71,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 40,
+     "medyan": 63,
+     "p95": 71.05,
+     "kacan": 0
+    },
+    "yasak": {
+     "n": 36,
+     "medyan": 7.5,
+     "p95": 14,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 44,
+     "medyan": 48,
+     "p95": 69.55000000000001,
+     "kacan": 0
+    }
+   }
+  },
+  "P3|K": {
+   "profil": "P3",
+   "strateji": "K",
+   "mesajGun": 3601.6133333333332,
+   "kbGun": 879.3001302083334,
+   "depoMBYil": 131.45888666666664,
+   "modemDkGun": 11.793333333333333,
+   "olay": 201,
+   "kacanOran": 0.19900497512437812,
+   "medyan": 7342,
+   "p95": 21554,
+   "ilk15dk": 0,
+   "yanlis": 0,
+   "alarm": 242,
+   "tur": {
+    "eksik": {
+     "n": 71,
+     "medyan": 8205,
+     "p95": 19860,
+     "kacan": 10
+    },
+    "kopma": {
+     "n": 49,
+     "medyan": 7344.5,
+     "p95": 20163.2,
+     "kacan": 11
+    },
+    "hareketsiz": {
+     "n": 52,
+     "medyan": 7277,
+     "p95": 21636,
+     "kacan": 11
+    },
+    "yasak": {
+     "n": 29,
+     "medyan": 8494,
+     "p95": 21580,
+     "kacan": 8
+    }
+   }
+  },
+  "P3|S": {
+   "profil": "P3",
+   "strateji": "S",
+   "mesajGun": 3602.0133333333333,
+   "kbGun": 879.5592447916667,
+   "depoMBYil": 131.53383333333335,
+   "modemDkGun": 11.793333333333333,
+   "olay": 201,
+   "kacanOran": 0,
+   "medyan": 36,
+   "p95": 71,
+   "ilk15dk": 0.48756218905472637,
+   "yanlis": 0,
+   "alarm": 429,
+   "tur": {
+    "eksik": {
+     "n": 71,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 49,
+     "medyan": 48,
+     "p95": 66.19999999999999,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 52,
+     "medyan": 64.5,
+     "p95": 72.44999999999999,
+     "kacan": 0
+    },
+    "yasak": {
+     "n": 29,
+     "medyan": 8,
+     "p95": 48.199999999999875,
+     "kacan": 0
+    }
+   }
+  },
+  "P3|U": {
+   "profil": "P3",
+   "strateji": "U",
+   "mesajGun": 2.7800000000000002,
+   "kbGun": 12.376282552083333,
+   "depoMBYil": 13.158493333333334,
+   "modemDkGun": 0.5333333333333333,
+   "olay": 201,
+   "kacanOran": 0,
+   "medyan": 36,
+   "p95": 71,
+   "ilk15dk": 0.48756218905472637,
+   "yanlis": 0,
+   "alarm": 429,
+   "tur": {
+    "eksik": {
+     "n": 71,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "kopma": {
+     "n": 49,
+     "medyan": 48,
+     "p95": 66.19999999999999,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 52,
+     "medyan": 64.5,
+     "p95": 72.44999999999999,
+     "kacan": 0
+    },
+    "yasak": {
+     "n": 29,
+     "medyan": 8,
+     "p95": 48.199999999999875,
+     "kacan": 0
+    }
+   }
+  },
+  "P4|K": {
+   "profil": "P4",
+   "strateji": "K",
+   "mesajGun": 3846.0133333333333,
+   "kbGun": 938.9680989583334,
+   "depoMBYil": 140.37948666666665,
+   "modemDkGun": 713.0400000000001,
+   "olay": 235,
+   "kacanOran": 0.01702127659574468,
+   "medyan": 371,
+   "p95": 695,
+   "ilk15dk": 0.18723404255319148,
+   "yanlis": 0,
+   "alarm": 235,
+   "tur": {
+    "kopma": {
+     "n": 55,
+     "medyan": 565,
+     "p95": 908.9999999999998,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 56,
+     "medyan": 471,
+     "p95": 656.1999999999999,
+     "kacan": 1
+    },
+    "eksik": {
+     "n": 88,
+     "medyan": 10.5,
+     "p95": 257.5,
+     "kacan": 2
+    },
+    "yasak": {
+     "n": 36,
+     "medyan": 377,
+     "p95": 568.5999999999995,
+     "kacan": 1
+    }
+   }
+  },
+  "P4|S": {
+   "profil": "P4",
+   "strateji": "S",
+   "mesajGun": 3847.8200000000006,
+   "kbGun": 939.5856119791666,
+   "depoMBYil": 140.51137333333332,
+   "modemDkGun": 713.0400000000001,
+   "olay": 235,
+   "kacanOran": 0,
+   "medyan": 63,
+   "p95": 546.0999999999997,
+   "ilk15dk": 0.39148936170212767,
+   "yanlis": 0,
+   "alarm": 424,
+   "tur": {
+    "kopma": {
+     "n": 55,
+     "medyan": 449,
+     "p95": 644.2,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 56,
+     "medyan": 150,
+     "p95": 504.75,
+     "kacan": 0
+    },
+    "eksik": {
+     "n": 88,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "yasak": {
+     "n": 36,
+     "medyan": 218,
+     "p95": 419.5,
+     "kacan": 0
+    }
+   }
+  },
+  "P4|U": {
+   "profil": "P4",
+   "strateji": "U",
+   "mesajGun": 14.646666666666667,
+   "kbGun": 16.024739583333332,
+   "depoMBYil": 14.001886666666667,
+   "modemDkGun": 13.293333333333333,
+   "olay": 235,
+   "kacanOran": 0,
+   "medyan": 63,
+   "p95": 546.0999999999997,
+   "ilk15dk": 0.39148936170212767,
+   "yanlis": 0,
+   "alarm": 424,
+   "tur": {
+    "kopma": {
+     "n": 55,
+     "medyan": 449,
+     "p95": 644.2,
+     "kacan": 0
+    },
+    "hareketsiz": {
+     "n": 56,
+     "medyan": 150,
+     "p95": 504.75,
+     "kacan": 0
+    },
+    "eksik": {
+     "n": 88,
+     "medyan": 0,
+     "p95": 0,
+     "kacan": 0
+    },
+    "yasak": {
+     "n": 36,
+     "medyan": 218,
+     "p95": 419.5,
+     "kacan": 0
+    }
+   }
+  }
+ }
+}
