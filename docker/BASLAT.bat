@@ -17,9 +17,17 @@ echo  Bes kapsayici baslatiliyor. Ilk seferde 1-2 GB indirilir, birkac dakika su
 docker compose up -d
 if errorlevel 1 (
   echo.
-  echo  Baslatma sirasinda hata olustu. Bu pencerenin ekran goruntusunu gonderin.
-  pause
-  exit /b 1
+  echo  Ilk denemede hata olustu. Eski kapsayicilar kapatilip bir kez daha deneniyor...
+  docker compose down
+  timeout /t 5 /nobreak >nul
+  docker compose up -d
+  if errorlevel 1 (
+    echo.
+    echo  Yine hata olustu. Docker Desktop'i kapatip acin ve bu dosyayi yeniden calistirin.
+    echo  Sorun surerse bu pencerenin ekran goruntusunu gonderin.
+    pause
+    exit /b 1
+  )
 )
 echo.
 echo  Servisler aciliyor, 20 saniye bekleniyor...
