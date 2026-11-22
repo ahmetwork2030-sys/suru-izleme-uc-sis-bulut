@@ -46,8 +46,10 @@ services:
       INFLUX_URL: http://influxdb:8086
       INFLUX_ORG: ${INFLUX_ORG}
       INFLUX_TOKEN: ${INFLUX_TOKEN}
+      # akış dosyası klasör olarak bağlanır: tek dosya bağlamada Windows'ta Deploy kaydedemiyor (EBUSY)
+      FLOWS: /data/akis/flows.json
     volumes:
-      - ./nodered/flows.json:/data/flows.json
+      - ./nodered:/data/akis
     depends_on:
       - mosquitto
       - influxdb

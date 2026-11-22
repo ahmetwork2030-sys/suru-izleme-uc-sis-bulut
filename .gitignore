@@ -1,2 +1,5 @@
 node_modules/
 *.log
+docker/nodered/.flows*.backup
+docker/nodered/flows_cred.json
+docker/nodered/.config*.json
