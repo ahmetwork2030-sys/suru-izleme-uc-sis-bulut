@@ -1,0 +1,25 @@
+senaryo,profil,K_wh_gun,S_wh_gun,U_wh_gun,U_azalma_yuzde
+Ana senaryo,P1,7.304,7.304,0.323,95.6
+Ana senaryo,P2,7.067,7.067,0.321,95.5
+Ana senaryo,P3,2.864,2.864,0.239,91.7
+Ana senaryo,P4,5.044,5.044,0.283,94.4
+U modemi uyutmasa (üçü de boşta),P1,7.304,7.304,2.905,60.2
+U modemi uyutmasa (üçü de boşta),P2,7.067,7.067,2.903,58.9
+U modemi uyutmasa (üçü de boşta),P3,2.864,2.864,2.829,1.2
+U modemi uyutmasa (üçü de boşta),P4,5.044,5.044,2.869,43.1
+Üçü de uykuda,P1,5.225,5.225,0.323,93.8
+Üçü de uykuda,P2,4.960,4.960,0.321,93.5
+Üçü de uykuda,P3,0.279,0.279,0.239,14.2
+Üçü de uykuda,P4,2.707,2.707,0.283,89.5
+MQTT keepalive 1200 s,P1,6.616,6.616,0.323,95.1
+MQTT keepalive 1200 s,P2,6.418,6.418,0.321,95.0
+MQTT keepalive 1200 s,P3,2.859,2.859,0.239,91.6
+MQTT keepalive 1200 s,P4,3.829,3.830,0.283,92.6
+Kuyruk süresi 5 s,P1,4.826,4.826,0.276,94.3
+Kuyruk süresi 5 s,P2,4.720,4.720,0.275,94.2
+Kuyruk süresi 5 s,P3,2.844,2.844,0.238,91.6
+Kuyruk süresi 5 s,P4,3.817,3.817,0.258,93.2
+Yukarı hız 1 Mbit/s,P1,7.307,7.307,0.324,95.6
+Yukarı hız 1 Mbit/s,P2,7.069,7.069,0.321,95.5
+Yukarı hız 1 Mbit/s,P3,2.867,2.867,0.239,91.7
+Yukarı hız 1 Mbit/s,P4,5.047,5.047,0.283,94.4

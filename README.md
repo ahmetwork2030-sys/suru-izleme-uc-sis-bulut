@@ -41,6 +41,7 @@ veri ve enerji kazancının "Uyuyan Bulut" veri yaşam döngüsünden geldiğini
 - **Canlı simülasyon (geliştirme):** `dist/index.html` (yazı tiplerini internetten yükler).
 - **Toplu deney:** `node deney/toplu_deney.js 30` → her profil için 5 senaryo × 30 gün. Çıktılar `deney/` klasörüne yazılır.
 - **Hızlı kontrol:** `node deney/hizli_test.js` → her profil için 10 günlük tek koşu.
+- **Enerji testi:** `node deney/enerji_testi.js 30` → simülatör izlerini ölçülmüş bir LTE güç modelinden (Huang ve ark., MobiSys '12; Quectel EG95 veri sayfası) geçirir ve sabit sis düğümündeki modemin günlük enerjisini hesaplar. Grafik: `python3 deney/enerji_grafik.py`.
 - **Sayfayı yeniden üretmek:** `node build.js` (motor, arayüz bölümleri ve deney özetini tek HTML dosyasına gömer), ardından `node cevrimdisi/build_cevrimdisi.js` (yazı tiplerini gömerek internetsiz sürümü üretir).
 
 Bağımlılık yoktur; Node 18 veya üstü yeterlidir.
@@ -66,6 +67,8 @@ Bağımlılık yoktur; Node 18 veya üstü yeterlidir.
 | `deney/toplu_deney.js` | Toplu deney betiği |
 | `deney/sonuclar_kosu.csv` | Koşu başına sonuçlar (profil × tohum × yöntem) |
 | `deney/sonuclar_ozet.csv`, `deney/ozet.json` | Profil × yöntem özeti |
+| `deney/enerji_testi.js`, `deney/enerji_grafik.py` | Enerji testi betiği ve grafiği |
+| `deney/enerji_ozet.csv`, `deney/enerji_duyarlilik.csv`, `deney/enerji_kosu.csv`, `deney/enerji.json`, `deney/enerji.png` | Enerji testi sonuçları (profil × yöntem, duyarlılık, koşu başına) |
 | `dist/index.html` | Tek dosyalık simülasyon sayfası |
 | `wokwi/etiket/` | LED kimlik etiketi devresi (ATtiny85, NEC kızılötesi kod) |
 | `wokwi/kapi-okuyucu/` | Ağıl kapısı okuyucu (ESP32: sayım, eksik listesi, MQTT, bağlantı yokken tamponlama) |

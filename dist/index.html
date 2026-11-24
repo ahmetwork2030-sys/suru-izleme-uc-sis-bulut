@@ -279,6 +279,8 @@ tr.U td { background: var(--accent-soft); }
     var rnd = mulberry32((opts.seed || 1) >>> 0);
     // isteğe bağlı yayın kancası: Docker gösteriminde okumalar, kapı geçişleri ve sayım MQTT'ye aktarılır
     var yayin = typeof opts.yayin === 'function' ? opts.yayin : null;
+    // isteğe bağlı iz kancası: enerji testi her dakikanın WAN durumunu ve her buluta gönderimi kaydeder
+    var iz = opts.iz || null;
     var N = P.N, nTrack = P.TASMA + P.ETIKET;
 
     // --- hayvanlar ---
@@ -663,10 +665,12 @@ tr.U td { background: var(--accent-soft); }
     }
     function sendNow(S, bytes, storeB, phone) {
       S.msgs++; S.bytes += bytes; S.store += storeB;
+      if (iz && iz.gonder) iz.gonder(S.id, t, bytes, !!phone);
       if (!phone) session(S);
     }
     function stepUplink() {
       var up = wan.up;
+      if (iz && iz.dakika) iz.dakika(t, up);
       STRATS.forEach(function (s) {
         var S = ST[s];
         if (up && (s === 'K' || s === 'S')) S.modemMin += 1;       // kalıcı MQTT oturumu
